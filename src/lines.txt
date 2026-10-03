@@ -1,0 +1,20 @@
+ahoy|Wilson Water Pirates, ahoy!|amy
+splash|Arr, splash attack!|ryan
+dad|Dad saves the day!|amy
+zoe|Bullseye, Zoe!|amy
+alex|Nice shot, Alex!|ryan
+yay|Yay! Hooray!|amy
+treasure|Ooh, treasure!|amy
+camp|We made it to camp!|ryan
+z1|Great job, Zoe!|amy
+z2|Way to go, Zoe!|amy
+z3|Super splash, Zoe!|amy
+z4|Zoe, you're amazing!|amy
+a1|Great job, Alex!|ryan
+a2|Awesome shot, Alex!|ryan
+a3|Alex, you're a super pirate!|ryan
+a4|Nice one, Alex!|ryan
+t1|Teamwork, Water Pirates!|amy
+t2|You did it!|ryan
+t3|High five!|amy
+miss|Almost! Try again!|amy

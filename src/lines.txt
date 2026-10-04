@@ -18,3 +18,20 @@ t1|Teamwork, Water Pirates!|amy
 t2|You did it!|ryan
 t3|High five!|amy
 miss|Almost! Try again!|amy
+s1|Sunny Stream!|amy
+s2|Duck Pond Bend! Quack quack!|amy
+s3|Beaver Rapids! Hold on tight!|ryan
+s4|Sunset Camp! Almost there!|amy
+z5|Splish splash, Zoe!|amy
+z6|Zoe, you got it!|amy
+z7|Water balloon power!|amy
+a5|Alex, what a splash!|ryan
+a6|Way to go, Alex!|ryan
+a7|Super soaker power!|ryan
+t4|Yo ho ho!|ryan
+t5|You're the best pirates ever!|amy
+t6|Wow! Big splash!|amy
+duck|Quack quack! Good shot!|amy
+bear|The bear says hi!|ryan
+chest|A treasure chest! Hooray!|amy
+miss2|So close! You can do it!|amy

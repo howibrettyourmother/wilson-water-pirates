@@ -4,7 +4,8 @@ A cheerful, wholesome canoe-splashing game for Alex (6) and Zoe (4). Float down 
 
 - Drag (or tap below the canoe) to steer. Tap anywhere above to squirt.
 - Big button bottom-left switches shooter: Alex = super soaker 💦, Zoe = water balloon 🎈 (big splash).
-- Life jackets refill on their own; no game over. ~2.5 minute run: Sunny Stream → Duck Pond Bend → Beaver Rapids → Sunset Camp.
+- Intro card for each river section. Life jackets refill on their own; no game over. ~2.5 minute run: Sunny Stream → Duck Pond Bend → Beaver Rapids → Sunset Camp.
+- Optional tilt steering (📱 on the title screen; asks motion permission on iPhone).
 - Original WebAudio pirate-jig music (ukulele, glockenspiel, kazoo), cheerful voice lines.
 
 Play: https://howibrettyourmother.github.io/wilson-water-pirates/

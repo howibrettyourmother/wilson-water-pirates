@@ -1,11 +1,11 @@
 (()=>{
 const cv=document.getElementById('c'),X=cv.getContext('2d');
 const DEBUG=/[?&]debug=1/.test(location.search);
-let W=400,H=760,DPR=1,SC=1,SAFE_T=0,SAFE_B=0;
+let W=400,H=760,DPR=1,SC=1,OX=0,XL=0,SAFE_T=0,SAFE_B=0;
 // safe-area probe: in standalone (Home Screen) mode the canvas runs under the status bar / notch / home indicator
 const safeEl=document.createElement('div');safeEl.style.cssText='position:fixed;left:0;top:0;width:0;height:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;pointer-events:none;visibility:hidden';document.body.appendChild(safeEl);
 const SAFE_DBG=DEBUG&&(location.search.match(/[?&]safe=(\d+),(\d+)/)||null);
-function resize(){const vw=innerWidth,vh=innerHeight;DPR=Math.min(devicePixelRatio||1,2.5);SC=vw/400;W=400;H=vh/SC;
+function resize(){const vw=innerWidth,vh=innerHeight;DPR=Math.min(devicePixelRatio||1,Math.min(vw,vh)>=700?1.5:2.5);SC=Math.min(vw/400,vh/600);W=400;H=vh/SC;OX=(vw-400*SC)/2;XL=OX/SC; // iPad landscape: full-height 400-wide play column, river scenery fills the sides
   const cs=getComputedStyle(safeEl),st=SAFE_DBG?+SAFE_DBG[1]:parseFloat(cs.paddingTop)||0,sb=SAFE_DBG?+SAFE_DBG[2]:parseFloat(cs.paddingBottom)||0;SAFE_T=st/SC;SAFE_B=sb/SC;
   cv.width=Math.round(vw*DPR);cv.height=Math.round(vh*DPR);cv.style.width=vw+'px';cv.style.height=vh+'px'}
 addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,250));resize();setTimeout(resize,300);
@@ -32,7 +32,7 @@ function reset(){canoe={x:riverC(0),tx:riverC(0),vx:0,wob:0,tilt:0,inv:0,bob:0,a
   nextBig=30;section=0;banner=null;dadSeq=null;endT=0;shake=0;spawnT=1.2;treasureT=1.5;obstT=3;decorY=-400;runT=0;dist=0;speed=0;camp=false;card=null;seen=[];cards=0;bumps=0;fillDecor()}
 // ---------------- decor (trees, birches, lighthouse, tent) ----------------
 function fillDecor(){while(decorY<dist+H+300){decorY+=rr(26,46);for(const side of[-1,1]){if(R()<0.75){const c=riverC(decorY),w=riverW(decorY);
-  const off=w/2+rr(26,150);const x=c+side*off;if(x<-40||x>440)continue;const p=decorY/(RUN*112);
+  const off=w/2+rr(26,150+XL);const x=c+side*off;if(x<-40-XL||x>440+XL)continue;const p=decorY/(RUN*112);
   const r=R();let k=r<0.33?'pine':r<0.5?'birch':r<0.6?'bush':r<0.7?'flower':r<0.77?'mushroom':r<0.83?'rockb':r<0.86?'picnic':r<0.875?'cabin':r<0.89?'deer':'flower';
   if(off<w/2+48&&R()<0.55)k='cattail';if((k==='cabin'||k==='picnic')&&off<w/2+70)k='bush';
   decor.push({k,x,wy:decorY,s:rr(0.8,1.25),side,ph:R()*9,c:pick(['#ff6b8b','#ffd23f','#c387ff','#fff'])})}
@@ -64,7 +64,7 @@ function spawnStuff(dt){if(runT>RUN-6)return;const wy=dist+CY()+70,c=riverC(wy),
   if(runT>nextBig&&!dadSeq){nextBig=runT+rr(42,52);objs.push({type:'o',k:'big',x:canoe.x,wy:wy+40,r:40,ph:0})}}
 // ---------------- input ----------------
 const ptrs={};
-function toGame(e){return{x:e.clientX/SC,y:e.clientY/SC}}
+function toGame(e){return{x:(e.clientX-OX)/SC,y:e.clientY/SC}}
 function inRect(p,r){return p.x>=r[0]&&p.x<=r[0]+r[2]&&p.y>=r[1]&&p.y<=r[1]+r[3]}
 let ui={};
 cv.addEventListener('pointerdown',e=>{e.preventDefault();const p=toGame(e);
@@ -193,9 +193,9 @@ function txt(s,x,y,size,fill,align,stroke,font){X.font=(font||'900 ')+size+'px "
 function secMix(){const p=runT/RUN;return{s:sectionIx(),sun:clamp((p-0.72)/0.12,0,1)}}
 function drawWorld(){const {s,sun}=state==='title'?{s:0,sun:0}:secMix();const S=SECTIONS[s];
   // grass
-  X.fillStyle=S.grass;X.fillRect(0,0,W,H);
+  X.fillStyle=S.grass;X.fillRect(-XL,0,W+2*XL,H);
   // grass texture dots
-  X.fillStyle='rgba(255,255,255,0.08)';for(let i=0;i<40;i++){const wy=Math.floor((dist/40))*40+i*40,y=sy(wy);const x=((wy*7919)%400+400)%400;X.beginPath();X.arc(x,y,6,0,TAU);X.fill()}
+  X.fillStyle='rgba(255,255,255,0.08)';for(let i=0;i<40;i++){const wy=Math.floor((dist/40))*40+i*40,y=sy(wy);const x=((wy*7919)%400+400)%400*(1+XL/200)-XL;X.beginPath();X.arc(x,y,6,0,TAU);X.fill()}
   // river polygon
   const step=12;const L=[],Rr=[];for(let y=-20;y<=H+20;y+=step){const wy=dist+(CY()-y);const c=riverC(wy),w=riverW(wy);L.push([c-w/2,y]);Rr.push([c+w/2,y])}
   X.beginPath();L.forEach(([x,y],i)=>i?X.lineTo(x-18,y):X.moveTo(x-18,y));for(let i=Rr.length-1;i>=0;i--)X.lineTo(Rr[i][0]+18,Rr[i][1]);X.closePath();X.fillStyle=S.sand;X.fill();
@@ -213,7 +213,7 @@ function drawWorld(){const {s,sun}=state==='title'?{s:0,sun:0}:secMix();const S=
   // decor
   for(const d of decor)drawDecor(d);
   if(camp||state==='end')drawCamp();
-  if(sun>0){const g2=X.createLinearGradient(0,0,0,H);g2.addColorStop(0,`rgba(255,140,70,${0.18*sun})`);g2.addColorStop(1,`rgba(140,60,160,${0.18*sun})`);X.fillStyle=g2;X.fillRect(0,0,W,H)}}
+  if(sun>0){const g2=X.createLinearGradient(0,0,0,H);g2.addColorStop(0,`rgba(255,140,70,${0.18*sun})`);g2.addColorStop(1,`rgba(140,60,160,${0.18*sun})`);X.fillStyle=g2;X.fillRect(-XL,0,W+2*XL,H)}}
 function star4(x,y,r,c){X.beginPath();X.moveTo(x,y-r);X.quadraticCurveTo(x,y,x+r,y);X.quadraticCurveTo(x,y,x,y+r);X.quadraticCurveTo(x,y,x-r,y);X.quadraticCurveTo(x,y,x,y-r);X.fillStyle=c;X.fill()}
 function mixC(a,b,t){const p=x=>[1,3,5].map(i=>parseInt(x.substr(i,2),16));const A=p(a),B=p(b);return'rgb('+A.map((v,i)=>Math.round(lerp(v,B[i],t))).join(',')+')'}
 function drawDecor(d){const y=sy(d.wy);if(y<-120||y>H+120)return;const x=d.x,s=d.s;
@@ -437,7 +437,7 @@ function camcorder(x,y,s){X.save();X.translate(x,y);X.scale(s,s);rrect(-18,-11,3
   if(Math.sin(T*10)>0)circ(-11,-4,3.5,'#ff1744');X.font='900 6px system-ui';X.fillStyle='#fff';X.fillText('REC',-3,-3);X.restore()}
 function drawVHS(t){// instant replay, slow-mo, VHS style
   const a=Math.min(1,t*4)*(t>5.2?Math.max(0,(5.4-t)/0.2):1);X.save();X.globalAlpha=a;
-  X.fillStyle='rgba(10,10,30,0.82)';X.fillRect(0,0,W,H);const fw=W-30,fh=fw*0.78,fx=15,fy=H*0.5-fh/2-20;
+  X.fillStyle='rgba(10,10,30,0.82)';X.fillRect(-XL,0,W+2*XL,H);const fw=W-30,fh=fw*0.78,fx=15,fy=H*0.5-fh/2-20;
   X.save();rrect(fx,fy,fw,fh,10);X.clip();
   const g=X.createLinearGradient(0,fy,0,fy+fh);g.addColorStop(0,'#58c9e8');g.addColorStop(1,'#2f8fbf');X.fillStyle=g;X.fillRect(fx,fy,fw,fh);
   // slow-mo replay: canoe rolls hard, Dad cartwheels out, giant crown splash
@@ -471,7 +471,7 @@ function stampDraw(t){const k=t<0.25?1+(1-t/0.25)*2:1;X.save();X.translate(W/2,H
   rrect(-170,-58,340,116,14);X.fillStyle='rgba(255,255,255,0.92)';X.fill();X.lineWidth=7;X.strokeStyle='#d32f2f';X.stroke();rrect(-160,-48,320,96,10);X.lineWidth=2.5;X.stroke();
   txt('📼 SENT TO',0,-22,26,'#d32f2f');txt('FUNNIEST HOME VIDEOS!',0,16,25,'#d32f2f');X.restore()}
 function drawCard(){const c=card,t=c.t,k=ease(t*2.5),out=t>2.3?ease((t-2.3)*3):0,S=SECTIONS[c.i];X.save();X.globalAlpha=1-out;
-  X.fillStyle=`rgba(20,40,80,${0.35*k})`;X.fillRect(0,0,W,H);X.translate(W/2,H*0.42+(1-k)*H*0.6-out*60);X.rotate(-0.03+Math.sin(T*2)*0.012);
+  X.fillStyle=`rgba(20,40,80,${0.35*k})`;X.fillRect(-XL,0,W+2*XL,H);X.translate(W/2,H*0.42+(1-k)*H*0.6-out*60);X.rotate(-0.03+Math.sin(T*2)*0.012);
   rrect(-160,-150,320,300,36);X.fillStyle='#fffaf0';X.fill();X.lineWidth=8;X.strokeStyle=S.col;X.stroke();
   const pb=1+Math.sin(T*6)*0.05;X.save();X.translate(0,-62);X.scale(pb,pb);circ(0,0,72,S.col);circ(0,0,60,'rgba(255,255,255,0.35)');txt(S.icon,0,4,76,'#000');X.restore();
   for(let i=0;i<5;i++){const a=T*1.5+i*1.26;txt('✦',Math.cos(a)*92,-62+Math.sin(a)*92,16,S.col)}
@@ -504,7 +504,7 @@ function drawTitle(){dist+=40/60;fillDecor();drawWorld();
   const bb=H-SAFE_B;if(canTilt){titleUI.tilt=[8,bb-58,50,50];circ(33,bb-33,24,tiltOn?'#35c46a':'rgba(255,255,255,0.85)');txt('📱',33,bb-32,22,'#000');if(tiltOn)txt('↔',33,bb-62,16,'#fff','center','#1b7a3c')}
   titleUI.mute=[W-58,bb-58,50,50];circ(W-33,bb-33,24,'rgba(255,255,255,0.85)');txt(AUD.muted?'🔇':'🔊',W-33,bb-32,24,'#000');
   drawParts()}
-function drawEnd(){drawWorld();X.fillStyle='rgba(20,30,70,0.35)';X.fillRect(0,0,W,H);const k=ease(endT*2);X.save();X.translate(W/2,H*0.5);X.scale(k,k);X.translate(-W/2,-H*0.5);
+function drawEnd(){drawWorld();X.fillStyle='rgba(20,30,70,0.35)';X.fillRect(-XL,0,W+2*XL,H);const k=ease(endT*2);X.save();X.translate(W/2,H*0.5);X.scale(k,k);X.translate(-W/2,-H*0.5);
   const pw=W-30,ph=Math.min(H-60-SAFE_T-SAFE_B,600),px=15,py=SAFE_T+(H-SAFE_T-SAFE_B-ph)/2;rrect(px,py,pw,ph,30);X.fillStyle='rgba(255,252,240,0.97)';X.fill();X.lineWidth=6;X.strokeStyle='#ffd23f';X.stroke();
   let y=py+40;txt('⛺ CAMP! ⛺',W/2,y,36,'#ff5ca8','center','#fff');y+=50;
   const st=stars();for(let i=0;i<3;i++){const on=i<st&&endT>0.6+i*0.35;const s=on?1+Math.max(0,0.3-(endT-0.6-i*0.35))*2:1;X.save();X.translate(W/2+(i-1)*70,y+(i===1?-8:6));X.scale(s,s);txt('★',0,0,64,on?'#ffd23f':'#ddd','center',on?'#e0a000':'#bbb');X.restore()}
@@ -519,7 +519,7 @@ function drawEnd(){drawWorld();X.fillStyle='rgba(20,30,70,0.35)';X.fillRect(0,0,
 // ---------------- loop ----------------
 let last=performance.now();
 function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;try{for(let i=0;i<TS;i++)update(dt);render()}catch(e){console.error(e)}requestAnimationFrame(frame)}
-function render(){X.setTransform(DPR*SC,0,0,DPR*SC,0,0);X.clearRect(0,0,W,H);
+function render(){X.setTransform(DPR*SC,0,0,DPR*SC,OX*DPR,0);X.clearRect(-XL,0,W+2*XL,H);
   if(state==='title'){T+=0;drawTitle();return}
   if(state==='end'){drawEnd();return}
   X.save();if(shake>0)X.translate(rr(-1,1)*shake*16,rr(-1,1)*shake*16);
@@ -530,5 +530,5 @@ reset();AUD.setTheme('title');requestAnimationFrame(frame);
 if(DEBUG)window.__W={get state(){return state},get score(){return score},get splashes(){return splashes},get treasure(){return treasure},get hearts(){return hearts},get dadFalls(){return dadFalls},get canoe(){return canoe},get shooter(){return shooter},get dad(){return dadSeq&&dadSeq.t},
   audio:AUD,start:startGame,objs:()=>objs,clear(){objs=[]},spawn(k,x,yScreen){return spawnTarget(k,x,dist+(CY()-yScreen))},gold(k,x,yScreen){objs.push({type:'g',k,x,wy:dist+(CY()-yScreen),r:16,ph:0})},
   rock(x,yScreen,k){objs.push({type:'o',k:k||'rock',x,wy:dist+(CY()-yScreen),r:k==='big'?40:22,ph:0,ang:0,len:80})},fire,switchShooter,set runT(v){runT=v},get runT(){return runT},dadGo(){startDad({})},setDad(t){if(dadSeq)dadSeq.t=t},end(){score=Math.max(score,960);splashes=Math.max(splashes,41);treasure=Math.max(treasure,27);dadFalls=Math.max(dadFalls,2);finish()},
-  freeze(){speed=0},get distV(){return dist},set TS(v){TS=v},get seen(){return seen},get cards(){return cards},get bumps(){return bumps},get card(){return card},get tiltOn(){return tiltOn},get stars(){return stars()},toggleTilt,toClient:(x,y)=>({x:x*SC,y:y*SC}),CY,setScore(v){score=v}};
+  freeze(){speed=0},get distV(){return dist},set TS(v){TS=v},get seen(){return seen},get cards(){return cards},get bumps(){return bumps},get card(){return card},get tiltOn(){return tiltOn},get stars(){return stars()},toggleTilt,toClient:(x,y)=>({x:x*SC+OX,y:y*SC}),CY,setScore(v){score=v}};
 })();

@@ -525,7 +525,7 @@ function render(){X.setTransform(DPR*SC,0,0,DPR*SC,OX*DPR,0);X.clearRect(-XL,0,W
   X.save();if(shake>0)X.translate(rr(-1,1)*shake*16,rr(-1,1)*shake*16);
   drawWorld();objs.filter(o=>o.type==='o').forEach(drawObj);objs.filter(o=>o.type!=='o').forEach(drawObj);
   if(state==='dad')drawDadScene();else{const c=canoeGeom();if(canoe.inv>0&&Math.sin(T*30)>0)X.globalAlpha=0.6;drawFamily(c.x,c.y,c.a,{cheer:canoe.cheer});X.globalAlpha=1}
-  drawShots();X.restore();drawParts();if(!(state==='dad'&&dadSeq.t>4.2&&dadSeq.t<9.6))drawHUD();drawBanner();if(card)drawCard()}
+  drawShots();X.restore();drawParts();if(!(state==='dad'&&dadSeq.t>4.2&&dadSeq.t<9.6)){const hk=XL>0?1.2:1,h0=H;X.save();X.translate(-XL,0);X.scale(hk,hk);const w0=W;W=(400+2*XL)/hk;H=h0/hk;try{drawHUD()}finally{W=w0;H=h0;X.restore()}for(const k of ['mute','sw'])if(ui[k])ui[k]=[ui[k][0]*hk-XL,ui[k][1]*hk,ui[k][2]*hk,ui[k][3]*hk]}drawBanner();if(card)drawCard()}
 reset();AUD.setTheme('title');requestAnimationFrame(frame);
 if(DEBUG)window.__W={get state(){return state},get score(){return score},get splashes(){return splashes},get treasure(){return treasure},get hearts(){return hearts},get dadFalls(){return dadFalls},get canoe(){return canoe},get shooter(){return shooter},get dad(){return dadSeq&&dadSeq.t},
   audio:AUD,start:startGame,objs:()=>objs,clear(){objs=[]},spawn(k,x,yScreen){return spawnTarget(k,x,dist+(CY()-yScreen))},gold(k,x,yScreen){objs.push({type:'g',k,x,wy:dist+(CY()-yScreen),r:16,ph:0})},

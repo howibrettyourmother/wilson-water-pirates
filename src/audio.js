@@ -23,7 +23,7 @@ const AUD=(()=>{
     else if(unlocked){C.resume().catch(()=>{});if(silentEl){const p=silentEl.play();p&&p.catch&&p.catch(()=>{})}}});
   function loadClips(){if(loading)return;loading=true;for(const k in CLIPS){try{const b=atob(CLIPS[k]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
     const p=C.decodeAudioData(u.buffer,x=>{clips[k]=x},()=>{});p&&p.catch&&p.catch(()=>{})}catch(e){}}}
-  const safe=fn=>function(){try{if(!C||muted||C.state!=='running')return;stats.sfx++;return fn.apply(null,arguments)}catch(e){}};
+  const safe=fn=>function(){try{if(!sfxOK())return;if(!C||muted||C.state!=='running')return;stats.sfx++;return fn.apply(null,arguments)}catch(e){}};
   function g(v,out){const x=C.createGain();x.gain.value=v;x.connect(out);return x}
   function env(x,t,a,h,r,v){x.gain.setValueAtTime(0.0001,t);x.gain.linearRampToValueAtTime(v,t+a);x.gain.setValueAtTime(v,t+a+h);x.gain.exponentialRampToValueAtTime(0.0001,t+a+h+r)}
   function o(type,f,t,d,out){const x=C.createOscillator();x.type=type;x.frequency.setValueAtTime(f,t);x.connect(out);x.start(t);x.stop(t+d+0.05);return x}
@@ -59,7 +59,9 @@ const AUD=(()=>{
   };
   // ---------- one voice at a time, with ducking ----------
   let cur=null,curEnd=0,curPrio=0,queued=null;
-  function say(k,prio){prio=prio||1;if(!C||muted||C.state!=='running')return false;const b=clips[k];if(!b)return false;const t=now();
+  /*vguard*/let _vk='',_vt=0,_sx=[];function sfxOK(){const n=Date.now();_sx=_sx.filter(x=>n-x<350);if(_sx.length>=3)return false;_sx.push(n);return true}
+  function say(k,prio,fromQ){const n=Date.now();if(k===_vk&&n-_vt<4000)return false;if((prio||1)<3&&C&&now()<curEnd-0.05)return false;const r=say0(k,prio);queued=null;if(r){_vk=k;_vt=n}return r}
+  function say0(k,prio){prio=prio||1;if(!C||muted||C.state!=='running')return false;const b=clips[k];if(!b)return false;const t=now();
     if(t<curEnd){if(prio>curPrio&&prio>=3){queued={k,prio};return true}if(prio>=2&&(!queued||queued.prio<prio)){queued={k,prio};return true}stats.dropped++;return false}
     const s=C.createBufferSource();s.buffer=b;s.connect(voiceBus);s.start(t+0.02);curEnd=t+0.02+b.duration+0.25;curPrio=prio;stats.voice++;stats.last=k;
     musicDuck.gain.cancelScheduledValues(t);musicDuck.gain.setTargetAtTime(0.3,t,0.04);musicDuck.gain.setTargetAtTime(1,curEnd,0.2);

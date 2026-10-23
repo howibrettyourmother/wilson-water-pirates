@@ -36,4 +36,5 @@ b.addEventListener('touchstart',down,{passive:false});b.addEventListener('touche
 b.addEventListener('mousedown',down);b.addEventListener('mouseup',up);b.addEventListener('mouseleave',function(e){if(on)up(e)});
 ['pointerdown','pointerup','click'].forEach(function(n){b.addEventListener(n,stop)});
 function add(){document.body.appendChild(b);document.body.appendChild(hint)}if(document.body)add();else addEventListener('DOMContentLoaded',add)})();</script>
+<script>/*bgm*/window.BGM_CFG={"id":"wilson-water-pirates","base":"music/","v":"20261023m","tracks":{"title":[68.571429,1.0],"play":[96.0,1.0],"sunset":[114.285714,1.0]},"map":{"end":"title","off":""},"pos":"left:10px;top:58px","poll":function(){var a=window.AUD||(typeof AUD!=='undefined'?AUD:null);if(!a)return{};return{area:a.theme,speaking:a.speaking,muted:a.muted}}};</script><script src="music/bgm.js?v=20261023m" defer></script>
 </body></html>

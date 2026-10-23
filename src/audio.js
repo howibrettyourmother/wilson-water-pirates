@@ -84,7 +84,7 @@ const AUD=(()=>{
   function shaker(t,v){const G=g(0,musicDuck);env(G,t,0.005,0.01,0.05,v);n(t,0.07,f('highpass',6000,0.7,G))}
   function wood(t,v){const G=g(0,musicDuck);env(G,t,0.001,0.005,0.06,v);o('sine',1200,t,0.08,G)}
   function boom(t,v){const G=g(0,musicDuck);env(G,t,0.003,0.03,0.2,v);const x=o('sine',110,t,0.25,G);x.frequency.exponentialRampToValueAtTime(50,t+0.2)}
-  function schedule(){if(!C||theme==='off')return;if(nextT<now())nextT=now()+0.05;
+  function schedule(){if(window.BGM&&BGM.ready)return;if(!C||theme==='off')return;if(nextT<now())nextT=now()+0.05;
     while(nextT<now()+0.15){const t=nextT,i=step%96,bar=(i/6)|0,e=i%6,ch=PROG[bar],soft=theme==='sunset'||theme==='end'?0.6:1;
       if(e===0||e===3){CH[ch].forEach((m,j)=>uke(m,t+j*0.012,0.05*soft))}else if(e===2||e===5){CH[ch].slice(1).forEach((m,j)=>uke(m,t+j*0.008,0.025*soft))}
       if(e===0)bass(BASS[ch],t,0.2*soft);if(e===3)bass(BASS[ch]+7,t,0.14*soft);

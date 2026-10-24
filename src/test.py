@@ -1,3 +1,4 @@
+import os
 import asyncio,sys
 from playwright.async_api import async_playwright
 BASE=sys.argv[1] if len(sys.argv)>1 else 'file:///workspace/wilson-water-pirates/index.html'
@@ -12,7 +13,11 @@ async def run(p,b,name,dev,shots):
     vp=await m.evaluate('[innerWidth,innerHeight]')
     await m.touchscreen.tap(vp[0]*0.1,vp[1]*0.35);await m.wait_for_timeout(1200)
     a=await m.evaluate('({u:__W.audio.unlocked,r:__W.audio.running,c:__W.audio.clipCount,s:__W.state})')
-    chk(f'[{name}] first tap unlocks audio',a['u'] and a['r'] and a['s']=='title',str(a));chk(f'[{name}] 37 voice clips decoded',a['c']==37,str(a['c']))
+    chk(f'[{name}] first tap unlocks audio',a['u'] and a['r'] and a['s']=='title',str(a));NC=len([l for l in open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'lines.txt')) if l.strip()])
+    for _ in range(40):
+        if await m.evaluate('__W.audio.clipCount')>=NC:break
+        await m.wait_for_timeout(200)
+    a['c']=await m.evaluate('__W.audio.clipCount');chk(f'[{name}] {NC} voice clips decoded',a['c']==NC,str(a['c']))
     if shots is not None: await m.screenshot(path=OUT+f'screenshot-title{shots}.png')
     if await m.evaluate('!!(window.DeviceOrientationEvent)'):
         await m.touchscreen.tap(33*vp[0]/400,vp[1]-33*vp[0]/400);await m.wait_for_timeout(300)

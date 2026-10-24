@@ -1,6 +1,6 @@
 // offline support: precache everything; pages+scripts network-first (cache fallback offline), media cache-first.
 // Bump V on each release so old caches are dropped; content also refreshes on the next online load.
-const P='wilson-water-pirates-',V='1.2.4-20261023q',C=P+V,A=["./", "index.html", "manifest.json", "apple-touch-icon-120.png", "apple-touch-icon-152.png", "apple-touch-icon-167.png", "apple-touch-icon.png", "favicon-32.png", "icon-192.png", "icon-512.png", "icon-maskable-512.png"];
+const P='wilson-water-pirates-',V='1.3.0-20261024a',C=P+V,A=["./", "index.html", "manifest.json", "apple-touch-icon-120.png", "apple-touch-icon-152.png", "apple-touch-icon-167.png", "apple-touch-icon.png", "favicon-32.png", "icon-192.png", "icon-512.png", "icon-maskable-512.png"];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(A.map(u=>new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith(P)&&k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()).then(()=>self.clients.matchAll()).then(cs=>cs.forEach(c=>c.postMessage('offline-ready'))))});
 self.addEventListener('message',e=>{if(e.data==='skipWaiting')self.skipWaiting()});

@@ -27,8 +27,8 @@ function riverC(wy){return 200+Math.sin(wy*0.0021)*62+Math.sin(wy*0.00083+1)*30}
 function riverW(wy){const p=wy/(RUN*112);const pond=(p>0.27&&p<0.47)?Math.sin((p-0.27)/0.2*Math.PI)*60:0;return 255+Math.sin(wy*0.0013)*20+pond}
 const CY=()=>H*0.7; // canoe center screen y
 const sy=wy=>CY()-(wy-dist);
-let zCount=0;
-function reset(){zCount=0;canoe={x:riverC(0),tx:riverC(0),vx:0,wob:0,tilt:0,inv:0,bob:0,armA:0,armZ:0,cheer:0};
+let zCount=0,lastNumT=-99;
+function reset(){zCount=0;lastNumT=-99;canoe={x:riverC(0),tx:riverC(0),vx:0,wob:0,tilt:0,inv:0,bob:0,armA:0,armZ:0,cheer:0};
   objs=[];shots=[];parts=[];floats=[];decor=[];hearts=3;regen=0;shooter='alex';score=0;splashes=0;treasure=0;dadFalls=0;missStreak=0;lastPraise=-9;lastMiss=-9;
   nextBig=30;section=0;banner=null;dadSeq=null;endT=0;shake=0;spawnT=1.2;treasureT=1.5;obstT=3;decorY=-400;runT=0;dist=0;speed=0;camp=false;card=null;seen=[];cards=0;bumps=0;fillDecor()}
 // ---------------- decor (trees, birches, lighthouse, tent) ----------------
@@ -109,8 +109,9 @@ function hitTarget(o,who){o.hit++;o.ht=0;splashes++;const oy=sy(o.wy);burst(o.x,
   const S=AUD.SFX;({duck:()=>S.quack(),frog:()=>S.ribbit(),paddler:()=>{S.laughMan();S.splash()},tuber:()=>{S.giggle(true);S.splash()},bear:()=>{S.laughMan();S.splash(true)},fish:()=>S.splash(),beaver:()=>{S.boing()},raft:()=>{S.giggle();S.cheer()},sprinkler:()=>S.splash()}[o.k]||S.splash)();
   if(o.k==='paddler'||o.k==='raft'||o.k==='tuber')o.splashBack=0.5;
   canoe.cheer=1.2;
-  // Zoe mode: every soaked target says the running count instead of a praise line
-  if(AUTOZ){zCount++;if(AUD.num(zCount))lastPraise=runT}
+  // Zoe mode: the count pops on screen; the voice only cheers milestones (10, 20, ...), never more than one number every 4 s
+  if(AUTOZ){zCount++;floatText(''+zCount,o.x,oy-70,'#ff8fc8')}
+  if(AUTOZ&&zCount%10===0&&runT-lastNumT>4&&AUD.num(zCount)){lastNumT=runT;lastPraise=runT}
   else if(runT-lastPraise>(o.k==='raft'||o.k==='bear'||o.k==='beaver'?1.2:2.6)){const pool=who==='zoe'?['z1','z2','z3','z4','z5','z6','z7','zoe','yay']:['a1','a2','a3','a4','a5','a6','a7','alex','splash'];
     let k=pick(pool);if(o.k==='raft')k=pick(['t1','t4','t5']);if(o.k==='bear'&&R()<0.6)k='bear';if(o.k==='duck'&&R()<0.3)k='duck';if(AUD.say(k,1))lastPraise=runT}
   S.giggle(who==='zoe')}

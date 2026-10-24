@@ -205,6 +205,7 @@ const canTilt=('DeviceOrientationEvent' in window)&&(('ontouchstart' in window)|
 addEventListener('keydown',e=>{if(state!=='play')return;if(e.key==='ArrowLeft')canoe.tx-=40;if(e.key==='ArrowRight')canoe.tx+=40;if(e.key===' ')switchShooter()});
 function switchShooter(){shooter=shooter==='alex'?'zoe':'alex';AUD.SFX.boing();floatText(shooter==='alex'?'Alex!':'Zoe!',ui.sw[0]+50,ui.sw[1]-10,shooter==='alex'?HATS[hatA]:HATS[hatZ])}
 function seatPos(who){const c=canoeGeom();return who==='alex'?{x:c.x+Math.sin(c.a)*46,y:c.y-46}:who==='zoe'?{x:c.x,y:c.y}:{x:c.x-Math.sin(c.a)*46,y:c.y+46}}
+const AUTOZ=/[?&]kid=zoe/.test(location.search);let autoT=1.5;
 function canoeGeom(){return{x:canoe.x,y:CY()+Math.sin(T*2.2)*2,a:canoe.tilt}}
 function fire(x,y){// aim assist: snap to nearest live target near the tap
   let bestO=null,bd=shooter==='zoe'?135:110;for(const o of objs){if(o.type!=='t'||o.hit>=o.hp)continue;const d=Math.hypot(o.x-x,sy(o.wy)-y);if(d<bd){bd=d;bestO=o}}
@@ -236,6 +237,9 @@ function startGame(){reset();state='play';AUD.setTheme('play');showCard(0);AUD.s
 function showCard(i){card={i,t:0};cards++;seen.push(i);setTimeout(()=>AUD.say('s'+(i+1),2),i?400:1700)}
 function goTitle(){state='title';AUD.setTheme('title')}
 function update(dt){T+=dt;
+  // Zoe mode (?kid=zoe from Zoe's hub): her squirter fires on its own at the nearest target; taps still work
+  if(AUTOZ&&state==='play'&&(autoT-=dt)<=0){let b=null,bd=1e9;for(const o of objs){if(o.type!=='t'||o.hit>=o.hp)continue;const y=sy(o.wy);if(y<60||y>CY()-60)continue;const d=CY()-y;if(d<bd){bd=d;b=o}}
+    if(b){autoT=1.25;fire(b.x,sy(b.wy))}else autoT=0.3}
   for(const p of parts){p.t+=dt;if(p.ring){p.y+=speed*dt;continue}p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.conf){p.rot+=dt*5;p.vx*=0.99}else p.vy+=420*dt}parts=parts.filter(p=>p.t<p.life);
   for(const f of floats){f.t+=dt;f.y-=40*dt}floats=floats.filter(f=>f.t<1.2);
   if(banner){banner.t+=dt;if(banner.t>2.6)banner=null}

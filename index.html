@@ -676,8 +676,21 @@ function showHint(){var r=b.getBoundingClientRect();hint.style.top=(r.bottom+6)+
 function leave(){done=true;try{window.dispatchEvent(new Event('hubsave'))}catch(x){}try{if(typeof window.hubSave==='function')window.hubSave()}catch(x){}
  setTimeout(function(){if(self!==top){try{parent.postMessage('hubClose',location.origin)}catch(x){}setTimeout(function(){try{location.href=u}catch(x){}},700);return}location.href=u},150)}
 function tick(){if(!on)return;var p=(Date.now()-t0)/HOLD;if(p>=1){set(1);on=false;leave();return}set(p);raf=requestAnimationFrame(tick)}
-function down(e){e.preventDefault();e.stopPropagation();if(on||done)return;on=true;t0=Date.now();b.style.opacity='1';hint.style.opacity='0';raf=requestAnimationFrame(tick)}
-function up(e){e.preventDefault();e.stopPropagation();if(!on)return;on=false;cancelAnimationFrame(raf);set(0);b.style.opacity='.5';if(Date.now()-t0<HOLD)showHint()}
+var pop=null,popT=0,popTO=0,blockTill=0,armed=false,lastTE=0;
+function inBtn(e){var c=pop&&pop.firstChild;if(!c)return false;var x=e.changedTouches?e.changedTouches[0]:e,r=c.getBoundingClientRect();return x.clientX>=r.left&&x.clientX<=r.right&&x.clientY>=r.top&&x.clientY<=r.bottom}
+function closePop(){if(!pop)return;clearTimeout(popTO);try{pop.remove()}catch(x){}pop=null;blockTill=Date.now()+450;armed=false}
+function openPop(){if(pop||done)return;if(!document.getElementById('hubPopCss')){var st=document.createElement('style');st.id='hubPopCss';st.textContent='@keyframes hubPopIn{0%{transform:scale(.2)}60%{transform:scale(1.12)}80%{transform:scale(.95)}100%{transform:scale(1)}}@keyframes hubPopB{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.04)}}';document.head.appendChild(st)}
+ pop=document.createElement('div');pop.id='hubPop';pop.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(20,0,40,.5);display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none';
+ pop.innerHTML='<div style="width:180px;height:180px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff7b0,#ffd54a 45%,#ff9ccf);border:8px solid #fff;box-shadow:0 0 0 6px #ff6fb5,0 10px 30px rgba(0,0,0,.35),0 0 40px #fff6;display:flex;align-items:center;justify-content:center;font-size:96px;line-height:1;animation:hubPopIn .45s ease-out,hubPopB 1.1s ease-in-out .45s infinite;pointer-events:none">🏠</div>';
+ document.body.appendChild(pop);popT=Date.now();armed=false;popTO=setTimeout(closePop,4000)}
+function block(e){var now=Date.now();if(!pop){if(now<blockTill&&e.target!==b){e.preventDefault&&e.cancelable&&e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()}return}
+ if(e.cancelable)e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();var ty=e.type;
+ if(ty==='touchstart'||ty==='mousedown'||ty==='pointerdown'){if(ty==='mousedown'&&now-lastTE<800)return;if(ty!=='pointerdown')armed=true;return}
+ if(ty==='touchend'||ty==='mouseup'){if(ty==='touchend')lastTE=now;else if(now-lastTE<800)return;if(!armed)return;armed=false;
+  if(inBtn(e)){if(now-popT<350)return;clearTimeout(popTO);leave();return}closePop()}}
+['touchstart','touchmove','touchend','touchcancel','mousedown','mousemove','mouseup','click','pointerdown','pointermove','pointerup','keydown','keyup','wheel','contextmenu'].forEach(function(n){addEventListener(n,block,{capture:true,passive:false})});
+function down(e){e.preventDefault();e.stopPropagation();if(k==='zoe'){openPop();return}if(on||done)return;on=true;t0=Date.now();b.style.opacity='1';hint.style.opacity='0';raf=requestAnimationFrame(tick)}
+function up(e){e.preventDefault();e.stopPropagation();if(k==='zoe')return;if(!on)return;on=false;cancelAnimationFrame(raf);set(0);b.style.opacity='.5';if(Date.now()-t0<HOLD)showHint()}
 function stop(e){e.stopPropagation()}
 b.addEventListener('touchstart',down,{passive:false});b.addEventListener('touchend',up,{passive:false});b.addEventListener('touchcancel',up,{passive:false});
 b.addEventListener('mousedown',down);b.addEventListener('mouseup',up);b.addEventListener('mouseleave',function(e){if(on)up(e)});

@@ -54,24 +54,32 @@ function add(){document.body.appendChild(b);document.body.appendChild(hint)}if(d
 sw.addEventListener('controllerchange',function(){if(!had){had=true;return}if(done)return;done=true;try{if(sessionStorage.swReloaded&&Date.now()-sessionStorage.swReloaded<10000)return;sessionStorage.swReloaded=Date.now()}catch(e){}location.reload()});
 function up(){if(sw.getRegistration)sw.getRegistration().then(function(g){if(g)g.update()}).catch(function(){})}
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')up()});})();</script>
-<script>/*kids-play*/setTimeout(function(){try{var L=localStorage,q=location.search,U='https://kids-play-log.brettwilson08.workers.dev/e',QK='kidsPlayQ',test=/[?&]tracktest\b/.test(q);
+<script>/*kids-play*/setTimeout(function(){try{var L=localStorage,SS=sessionStorage,q=location.search,U='https://kids-play-log.brettwilson08.workers.dev/e',QK='kidsPlayQ',test=/[?&]tracktest\b/.test(q);
 if(/[?&]notrack\b/.test(q)){try{L.kidsNoTrack='1'}catch(x){}return}if(/[?&]track=1\b/.test(q))try{L.removeItem('kidsNoTrack')}catch(x){}
 if(!test&&(L.kidsNoTrack||navigator.webdriver||/headless|phantomjs|lighthouse|bot\b|crawler|spider/i.test(navigator.userAgent)))return;
 var g='wilson-water-pirates';if(g==='zoes-princess-castle'&&/[?&]s=abc\b/.test(q))g='zoe-abc123';
 var k=(q.match(/[?&](?:kid|mode)=(alex|zoe)\b/)||[])[1];if(!k){try{k=L.kidsHub}catch(x){}}if(k!=='alex'&&k!=='zoe')k='alex';
-var s=Date.now().toString(36)+Math.random().toString(36).slice(2,8),st=Date.now(),ms=0,vis=document.visibilityState!=='hidden',t0=vis?Date.now():0,busy=0;
+var IDLE=60e3,GAP=600e3,ua=navigator.userAgent,tp=navigator.maxTouchPoints||0,sa=navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone),(display-mode: fullscreen)').matches);
+var dv=(/iPad/.test(ua)||(/Macintosh/.test(ua)&&tp>1)?'ipad':/iPhone/.test(ua)?'iphone':/Android/.test(ua)?'android':/Mac/.test(ua)?'mac':/Win/.test(ua)?'win':/CrOS/.test(ua)?'cros':'other')+'-'+(sa?'app':/CriOS|Chrome/.test(ua)?'chrome':/FxiOS|Firefox/.test(ua)?'firefox':/Safari/.test(ua)?'safari':'web');
+var SK='kidsPlayS:'+g+':'+k,S=null,vis=document.visibilityState!=='hidden',mark=0,until=0,sent=-1,busy=0,lastIn=0;
+try{var o=JSON.parse(SS[SK]||'null');if(o&&o.s&&Date.now()-o.u<GAP){S=o;until=o.u;sent=o.ms}}catch(x){}
 function rd(){try{return JSON.parse(L[QK]||'{}')||{}}catch(x){return{}}}
 function wr(o){try{var ks=Object.keys(o);if(ks.length>200)ks.slice(0,ks.length-200).forEach(function(i){delete o[i]});L[QK]=JSON.stringify(o)}catch(x){}}
-function cur(ty){var m=ms+(vis&&t0?Date.now()-t0:0);var e={s:s,k:k,g:g,st:st,ms:m,ty:ty};if(test)e.test=1;return e}
-function put(ty){var o=rd();o[s]=cur(ty);wr(o);return o}
-function flush(o,end){o=o||rd();var ev=Object.keys(o).map(function(i){return o[i]});if(!ev.length||navigator.onLine===false)return;var b=JSON.stringify({v:1,ev:ev.slice(0,50)});
+function credit(n){if(S&&vis&&mark){var a=Math.min(n,until)-mark;if(a>0)S.ms+=a}mark=vis?n:0;if(S){S.u=until;try{SS[SK]=JSON.stringify(S)}catch(x){}}}
+function put(ty){var o=rd(),e={s:S.s,k:k,g:g,st:S.st,ms:Math.round(S.ms),ty:ty,d:dv};if(test)e.test=1;o[S.s]=e;wr(o);return o}
+function flush(o,end){o=o||rd();var ev=Object.keys(o).map(function(i){return o[i]});if(!ev.length||navigator.onLine===false)return;var b=JSON.stringify({v:2,ev:ev.slice(0,50)});
  if(end){try{if(navigator.sendBeacon&&navigator.sendBeacon(U,new Blob([b],{type:'text/plain'})))return}catch(x){}}
  if(busy&&!end)return;busy=1;try{fetch(U,{method:'POST',body:b,keepalive:true,mode:'cors',cache:'no-store',credentials:'omit',headers:{'Content-Type':'text/plain'}}).then(function(r){busy=0;if(!r.ok)return;var n=rd();ev.forEach(function(e){var c=n[e.s];if(c&&c.ms===e.ms)delete n[e.s]});wr(n)},function(){busy=0})}catch(x){busy=0}}
-flush(put('launch'));
-setInterval(function(){if(vis)flush(put('hb'))},30000);
-function hide(){if(!vis)return;ms+=Date.now()-t0;vis=false;t0=0;flush(put('end'),1)}
-function show(){if(vis)return;vis=true;t0=Date.now();flush(put('hb'))}
+function save(ty,end){if(!S)return;var m=Math.round(S.ms);if(m===sent&&ty!=='launch')return;sent=m;flush(put(ty),end)}
+function inp(){var n=Date.now();if(n-lastIn<250)return;lastIn=n;if(!vis){vis=true;mark=n}credit(n);
+ if(!S||n-until>GAP){if(S)save('hb',1);S={s:n.toString(36)+Math.random().toString(36).slice(2,8),st:n,ms:0,u:0};sent=-1;mark=n;setTimeout(function(){credit(Date.now());save('launch')},5000)}
+ until=n+IDLE;credit(n)}
+['pointerdown','touchstart','keydown','mousedown','wheel'].forEach(function(t){addEventListener(t,inp,{capture:true,passive:true})});
+setInterval(function(){if(!vis||!S)return;credit(Date.now());save('hb')},30000);
+function hide(){if(!vis)return;credit(Date.now());vis=false;mark=0;save('end',1)}
+function show(){if(vis)return;vis=true;mark=Date.now()}
 document.addEventListener('visibilitychange',function(){try{document.visibilityState==='hidden'?hide():show()}catch(x){}});
-addEventListener('pagehide',function(){try{hide()}catch(x){}});addEventListener('online',function(){try{flush()}catch(x){}});
+addEventListener('pagehide',function(){try{hide()}catch(x){}});addEventListener('pageshow',function(){try{if(document.visibilityState!=='hidden')show()}catch(x){}});
+addEventListener('online',function(){try{flush()}catch(x){}});if(Object.keys(rd()).length)flush();
 }catch(x){}},0);</script>
 </body></html>

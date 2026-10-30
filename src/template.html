@@ -1,4 +1,33 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
+<script>/*audio-guard v1*/(function(){if(window.__AG)return;var W=window,D=document,ctxs=[],els=[],hid=false,was=[],wasEl=[],pend=false,iv=W.setInterval;
+var AG=W.__AG={hidden:function(){return hid},ctxs:ctxs,els:els,blocked:0};
+function reg(c){if(c&&ctxs.indexOf(c)<0){ctxs.push(c);if(c.state==='running')c.__agWant=true;try{c.addEventListener('statechange',function(){if(c.state==='running')c.__agWant=true;if(!hid&&c.__agWant&&(c.state==='interrupted'||c.state==='suspended'))pend=true})}catch(e){}}}
+['AudioContext','webkitAudioContext'].forEach(function(n){var B=W[n];if(!B)return;try{var P=B.prototype,r=P.resume;
+ W[n]=function(a,b){var c=arguments.length?new B(a):new B();reg(c);return c};W[n].prototype=P;try{Object.setPrototypeOf(W[n],B)}catch(e){}
+ P.resume=function(){reg(this);if(hid){this.__agWant=true;return Promise.resolve()}return r.apply(this,arguments)}}catch(e){}});
+var S=W.AudioScheduledSourceNode&&AudioScheduledSourceNode.prototype;[S,W.AudioBufferSourceNode&&AudioBufferSourceNode.prototype,W.OscillatorNode&&OscillatorNode.prototype].forEach(function(p){if(!p||!p.hasOwnProperty('start'))return;var st=p.start;
+ p.start=function(){reg(this.context);if(hid){AG.blocked++;return}return st.apply(this,arguments)}});
+var M=W.HTMLMediaElement&&HTMLMediaElement.prototype;if(M){var pl=M.play;M.play=function(){if(els.indexOf(this)<0)els.push(this);if(hid){AG.blocked++;return Promise.resolve()}return pl.apply(this,arguments)}}
+var ss=W.speechSynthesis;if(ss&&ss.speak){var sp=ss.speak.bind(ss);try{ss.speak=function(u){if(hid){AG.blocked++;return}return sp(u)}}catch(e){}}
+W.setInterval=function(f){var a=[].slice.call(arguments);if(typeof f==='function')a[0]=function(){if(!hid)return f.apply(this,arguments)};return iv.apply(W,a)};
+function allEls(){D.querySelectorAll('audio,video').forEach(function(e){if(els.indexOf(e)<0)els.push(e)});return els}
+function hide(){if(hid)return;hid=true;was=[];wasEl=[];
+ ctxs.forEach(function(c){try{if(c.state==='running'||c.state==='interrupted'||c.__agWant){was.push(c);c.__agWant=true}if(c.state!=='closed')c.suspend()}catch(e){}});
+ allEls().forEach(function(e){try{if(!e.paused){wasEl.push(e);e.pause()}}catch(e2){}});try{ss&&ss.cancel()}catch(e){}}
+function show(){if(!hid||D.visibilityState==='hidden')return;hid=false;
+ was.forEach(function(c){try{c.__agWant=true;if(c.state!=='closed')c.resume().catch(function(){pend=true});}catch(e){pend=true}});
+ wasEl.forEach(function(e){try{if(e.paused){var p=e.play();p&&p.catch&&p.catch(function(){pend=true})}}catch(e2){}});
+ setTimeout(function(){was.forEach(function(c){if(c.state!=='running'&&c.state!=='closed')pend=true})},300)}
+function kick(){if(!pend||hid)return;pend=false;ctxs.forEach(function(c){try{if(c.__agWant&&c.state!=='running'&&c.state!=='closed')c.resume()}catch(e){}});
+ wasEl.forEach(function(e){try{if(e.paused)e.play().catch(function(){})}catch(x){}});wasEl=[]}
+['touchstart','touchend','pointerdown','mousedown','keydown'].forEach(function(t){W.addEventListener(t,kick,{capture:true,passive:true})});
+D.addEventListener('visibilitychange',function(){D.visibilityState==='hidden'?hide():show()});
+W.addEventListener('pagehide',hide);D.addEventListener('freeze',hide);W.addEventListener('blur',function(){if(D.visibilityState==='hidden')hide()});
+W.addEventListener('pageshow',show);W.addEventListener('focus',show);D.addEventListener('resume',show);
+iv.call(W,function(){if(!hid)ctxs.forEach(function(c){if(c.__agWant&&c.state==='interrupted')pend=true})},2000);
+AG.hide=hide;AG.show=show})();</script>
+
+
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="app-version" content="1.2.0">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Pirates"><meta name="application-name" content="Pirates"><meta name="theme-color" content="#4fd1ee">
 <title>The Wilson Water Pirates</title>

@@ -28,6 +28,7 @@ iv.call(W,function(){if(!hid)ctxs.forEach(function(c){if(c.__agWant&&c.state==='
 AG.hide=hide;AG.show=show})();</script>
 
 
+
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="app-version" content="1.2.0">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Pirates"><meta name="application-name" content="Pirates"><meta name="theme-color" content="#4fd1ee">
 <title>The Wilson Water Pirates</title>
@@ -164,22 +165,23 @@ const ease=t=>t<0?0:t>1?1:1-Math.pow(1-t,3);
 // ---------------- state ----------------
 const HATS=['#e53935','#1e88e5','#8e24aa','#43a047','#fb8c00','#ec407a','#fdd835'];
 let hatA=+(localStorage.getItem('wwp_hatA')||0),hatZ=+(localStorage.getItem('wwp_hatZ')||2);
-let best=+(localStorage.getItem('wwp_best')||0);
-let state='title',T=0,runT=0,dist=0,speed=0;const RUN=150;
+let best=+(localStorage.getItem('wwp_best')||0),hard=localStorage.getItem('wwp_hard')==='1',badges=JSON.parse(localStorage.getItem('wwp_badges')||'{}');
+let state='title',T=0,runT=0,dist=0,speed=0;const RUN=185;
 let card=null,TS=1,seen=[],cards=0,bumps=0,tiltOn=false,tiltG=null;
 let canoe,objs,shots,parts,floats,decor,hearts,regen,shooter,score,splashes,treasure,dadFalls,missStreak,lastPraise,lastMiss,nextBig,section,banner,dadSeq,endT,shake,spawnT,treasureT,obstT,decorY,camp;
 const SECTIONS=[
  {n:'Sunny Stream',icon:'☀️',col:'#ffa000',at:0,water:['#4fd1ee','#2fb4dc'],grass:'#7fd35b',sand:'#f7dc94',sky:null},
- {n:'Duck Pond Bend',icon:'🦆',col:'#2e9b5a',at:0.25,water:['#5ad6e0','#33b8c9'],grass:'#86d45e',sand:'#f4d58a',sky:null},
- {n:'Beaver Rapids',icon:'🦫',col:'#8d5a2b',at:0.5,water:['#45c3ea','#2a9fd0'],grass:'#6cc653',sand:'#ead08a',sky:null},
- {n:'Sunset Camp',icon:'🌅',col:'#ff5ca8',at:0.76,water:['#f6a96b','#c779a8'],grass:'#7fb85a',sand:'#f2c58a',sky:1}];
+ {n:'Duck Pond Bend',icon:'🦆',col:'#2e9b5a',at:0.22,water:['#5ad6e0','#33b8c9'],grass:'#86d45e',sand:'#f4d58a',sky:null},
+ {n:'Beaver Rapids',icon:'🦫',col:'#8d5a2b',at:0.42,water:['#45c3ea','#2a9fd0'],grass:'#6cc653',sand:'#ead08a',sky:null},
+ {n:'Pirate Cove',icon:'🏴‍☠️',col:'#7e57c2',at:0.62,water:['#3aa8c8','#246a9a'],grass:'#5a9a4a',sand:'#e8c878',sky:null},
+ {n:'Sunset Camp',icon:'🌅',col:'#ff5ca8',at:0.82,water:['#f6a96b','#c779a8'],grass:'#7fb85a',sand:'#f2c58a',sky:1}];
 function riverC(wy){return 200+Math.sin(wy*0.0021)*62+Math.sin(wy*0.00083+1)*30}
 function riverW(wy){const p=wy/(RUN*112);const pond=(p>0.27&&p<0.47)?Math.sin((p-0.27)/0.2*Math.PI)*60:0;return 255+Math.sin(wy*0.0013)*20+pond}
 const CY=()=>H*0.7; // canoe center screen y
 const sy=wy=>CY()-(wy-dist);
 let zCount=0,lastNumT=-99;
 function reset(){zCount=0;lastNumT=-99;canoe={x:riverC(0),tx:riverC(0),vx:0,wob:0,tilt:0,inv:0,bob:0,armA:0,armZ:0,cheer:0};
-  objs=[];shots=[];parts=[];floats=[];decor=[];hearts=3;regen=0;shooter='alex';score=0;splashes=0;treasure=0;dadFalls=0;missStreak=0;lastPraise=-9;lastMiss=-9;
+  objs=[];shots=[];parts=[];floats=[];decor=[];hearts=hard?2:3;regen=0;shooter='alex';score=0;splashes=0;treasure=0;dadFalls=0;missStreak=0;lastPraise=-9;lastMiss=-9;
   nextBig=30;section=0;banner=null;dadSeq=null;endT=0;shake=0;spawnT=1.2;treasureT=1.5;obstT=3;decorY=-400;runT=0;dist=0;speed=0;camp=false;card=null;seen=[];cards=0;bumps=0;fillDecor()}
 // ---------------- decor (trees, birches, lighthouse, tent) ----------------
 function fillDecor(){while(decorY<dist+H+300){decorY+=rr(26,46);for(const side of[-1,1]){if(R()<0.75){const c=riverC(decorY),w=riverW(decorY);
@@ -194,7 +196,7 @@ function fillDecor(){while(decorY<dist+H+300){decorY+=rr(26,46);for(const side o
   decor=decor.filter(d=>sy(d.wy)<H+120);decor.sort((a,b)=>b.wy-a.wy)}
 // ---------------- spawning ----------------
 const TGT={duck:{r:20,hp:1,pts:10},paddler:{r:28,hp:1,pts:20},tuber:{r:24,hp:1,pts:15},frog:{r:20,hp:1,pts:15},bear:{r:30,hp:1,pts:30,bank:1},
-  fish:{r:18,hp:1,pts:25},beaver:{r:34,hp:2,pts:40},raft:{r:34,hp:3,pts:50},sprinkler:{r:22,hp:1,pts:15,bank:1}};
+  fish:{r:18,hp:1,pts:25},beaver:{r:34,hp:2,pts:40},raft:{r:34,hp:3,pts:50},sprinkler:{r:22,hp:1,pts:15,bank:1},crab:{r:22,hp:2,pts:35,bank:1}};
 function spawnTarget(k,x,wy){const d=TGT[k];const o={type:'t',k,x,wy,r:d.r,hp:d.hp,pts:d.pts,hit:0,ht:0,ph:R()*9,vx:0,done:0,flip:R()<0.5?-1:1};
   if(k==='duck'){o.ducklings=R()<0.5?(1+R()*3|0):0;o.vx=rr(-12,12)}
   if(k==='raft'){o.vx=rr(-30,30)}
@@ -202,15 +204,15 @@ function spawnTarget(k,x,wy){const d=TGT[k];const o={type:'t',k,x,wy,r:d.r,hp:d.
   objs.push(o);return o}
 function sectionIx(){const p=runT/RUN;let s=0;SECTIONS.forEach((S,i)=>{if(p>=S.at)s=i});return s}
 function spawnStuff(dt){if(runT>RUN-6)return;const wy=dist+CY()+70,c=riverC(wy),w=riverW(wy),s=sectionIx();
-  if(card&&card.t<2.4)return;spawnT-=dt;if(spawnT<=0){spawnT=rr(1.1,1.8)-s*0.1;
-    const pool=[['duck','duck','paddler','tuber','frog','fish','bear','sprinkler'],['duck','duck','duck','frog','frog','paddler','tuber','fish','bear'],['beaver','paddler','raft','duck','tuber','fish','bear','frog','sprinkler'],['duck','paddler','tuber','raft','fish','bear','frog']][s];
+  if(card&&card.t<2.4)return;spawnT-=dt;if(spawnT<=0){spawnT=(rr(1.1,1.8)-s*0.1)*(hard?0.72:1);
+    const pool=[['duck','duck','paddler','tuber','frog','fish','bear','sprinkler'],['duck','duck','duck','frog','frog','paddler','tuber','fish','bear'],['beaver','paddler','raft','duck','tuber','fish','bear','frog','sprinkler'],['crab','crab','duck','paddler','raft','fish','bear','frog','sprinkler'],['duck','paddler','tuber','raft','fish','bear','frog','crab']][s];
     const k=pick(pool);const def=TGT[k];
     if(def.bank){const side=R()<0.5?-1:1;spawnTarget(k,c+side*(w/2+22),wy).side=side}
     else if(k==='beaver'){const side=R()<0.5?-1:1;const o=spawnTarget(k,c+side*(w/2-34),wy);o.side=side}
     else spawnTarget(k,c+rr(-w/2+30,w/2-30),wy)}
   treasureT-=dt;if(treasureT<=0){treasureT=rr(0.9,1.6);let k=pick(['coin','coin','coin','ducky','popsicle','smore','cherry','icecream','beachball']);if(R()<0.06)k='chest';
     const lane=c+rr(-w/2+40,w/2-40);const n=k==='coin'?3+(R()*3|0):1;for(let i=0;i<n;i++)objs.push({type:'g',k,x:lane+Math.sin(i*0.8)*14,wy:wy+i*34,r:k==='chest'?22:16,ph:R()*9})}
-  obstT-=dt;if(obstT<=0){obstT=rr(3.0,4.4)-s*0.3;const k=s===2?pick(['rock','log','rapids','rapids']):pick(['rock','rock','log','rapids']);
+  obstT-=dt;if(obstT<=0){obstT=(rr(3.0,4.4)-s*0.3)*(hard?0.75:1);const k=s===2?pick(['rock','log','rapids','rapids']):pick(['rock','rock','log','rapids']);
     const side=R()<0.5?-1:1;const x=c+side*rr(w*0.12,w*0.36);objs.push({type:'o',k,x,wy,r:k==='log'?18:k==='rapids'?44:22,ph:R()*9,ang:rr(-0.3,0.3),len:rr(70,95)})}
   if(runT>nextBig&&!dadSeq){nextBig=runT+rr(42,52);objs.push({type:'o',k:'big',x:canoe.x,wy:wy+40,r:40,ph:0})}}
 // ---------------- input ----------------
@@ -285,8 +287,8 @@ function update(dt){T+=dt;
   if(state==='end'){endT+=dt;if(endT<4&&R()<dt*3)confetti(6);return}
   if(state!=='play'&&state!=='dad')return;
   if(state==='dad'){updateDad(dt);return}
-  runT+=dt;speed=lerp(speed,runT>RUN-3?40:card&&card.t<2.3?45:112,dt*1.5);dist+=speed*dt;fillDecor();
-  const s=sectionIx();if(s!==section){section=s;showCard(s);AUD.SFX.fanfare();AUD.setTheme(s===3?'sunset':'play')}
+  runT+=dt;speed=lerp(speed,runT>RUN-3?40:card&&card.t<2.3?45:(hard?138:112),dt*1.5);dist+=speed*dt;fillDecor();
+  const s=sectionIx();if(s!==section){section=s;showCard(s);AUD.SFX.fanfare();AUD.setTheme(s>=4?'sunset':'play');earnBadge('sec'+s)}
   spawnStuff(dt);
   // steering (with Dad's gentle help keeping us off the banks)
   const c=riverC(dist),w=riverW(dist);
@@ -337,10 +339,12 @@ function updateDad(dt){const d=dadSeq,t0=d.t;d.t+=dt;const t=d.t;const at=x=>t0<
   if(at(8.0)){AUD.SFX.stamp();shake=0.3}
   if(at(9.8)){AUD.SFX.giggle(true);AUD.SFX.giggle(false);canoe.cheer=2}
   if(at(10.6)){AUD.say(pick(['t3','yay','t1']),2)}
-  if(t>11.6){state='play';dadSeq=null;hearts=3;canoe.inv=2.5;objs=objs.filter(o=>!(o.type==='o'&&Math.abs(sy(o.wy)-CY())<200))}}
+  if(t>11.6){state='play';dadSeq=null;hearts=hard?2:3;canoe.inv=2.5;objs=objs.filter(o=>!(o.type==='o'&&Math.abs(sy(o.wy)-CY())<200))}}
 // ---------------- end ----------------
+function earnBadge(k){if(badges[k])return;badges[k]=1;try{localStorage.setItem('wwp_badges',JSON.stringify(badges))}catch(e){}AUD.SFX.boing();floatText('🏅',W/2,H*0.28,'#ffd23f')}
 function stars(){return score>=2000?3:score>=800?2:1}
 function finish(){state='end';endT=0;AUD.setTheme('end');AUD.SFX.fanfare();AUD.SFX.cheer();setTimeout(()=>AUD.say('camp',2),600);setTimeout(()=>AUD.say(pick(['t2','t1','t3']),2),2600);
+  earnBadge('camp');if(splashes>=30)earnBadge('splash30');if(treasure>=20)earnBadge('loot20');if(dadFalls>=2)earnBadge('dadcam');if(hard)earnBadge('hardrun');if(stars()>=3)earnBadge('star3');
   if(score>best){best=score;localStorage.setItem('wwp_best',best)}confetti(80)}
 // ================= DRAWING =================
 function rrect(x,y,w,h,r){X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath()}
@@ -541,6 +545,9 @@ function drawObj(o){const y=sy(o.wy),x=o.x;if(y<-80||y>H+80)return;const done=o.
     for(let i=0;i<2;i++){const px=-14+i*24;rrect(px-9,-6,18,16,6);X.fillStyle='#7e57c2';X.fill();face(px,-14,10,{happy:o.hit>0,open:o.hit>0,seed:i*4});X.beginPath();X.moveTo(px-12,-20);X.lineTo(px,-32);X.lineTo(px+12,-20);X.fillStyle='#222';X.fill()}
     for(let i=0;i<o.hp;i++)circ(-14+i*14,32,4,i<o.hit?'#5ec8ff':'rgba(255,255,255,0.7)');
     if(done&&ht<1.6)txt('YOU WIN!',0,-48,13,'#fff','center','#7e57c2');break}
+    case'crab':{X.scale(o.side||1,1);ell(0,10,18,8,'#e07040');ell(0,2,16,12,'#ff8a50');circ(-14,-2,7,'#ff8a50');circ(14,-2,7,'#ff8a50');circ(-14,-2,2.5,'#222');circ(14,-2,2.5,'#222');
+    X.strokeStyle='#c45a28';X.lineWidth=3;[-1,1].forEach(s=>{X.beginPath();X.moveTo(s*10,8);X.lineTo(s*22,16);X.lineTo(s*18,20);X.stroke()});
+    if(done&&ht<1.3)txt('SNAP!',0,-28,13,'#fff','center','#a33');break}
   case'sprinkler':{X.fillStyle='#777';X.fillRect(-3,-6,6,16);circ(0,-8,6,'#ffd23f');const a=Math.sin(T*3+o.ph)*0.9;for(let i=0;i<6;i++){const k=((T*2+i/6)%1);const dx=Math.sin(a)*k*44,dy=-Math.sin(k*Math.PI)*30;circ(dx,-8+dy,2.5,'rgba(150,220,255,0.9)')}
     if(done&&ht<1)txt('SPRITZ!',0,-40,12,'#fff','center','#1565c0');break}
   }
@@ -635,11 +642,11 @@ function drawCard(){const c=card,t=c.t,k=ease(t*2.5),out=t>2.3?ease((t-2.3)*3):0
   for(let i=0;i<5;i++){const a=T*1.5+i*1.26;txt('✦',Math.cos(a)*92,-62+Math.sin(a)*92,16,S.col)}
   txt(S.n,0,38,32,S.col,'center','#fff');
   X.strokeStyle='#ddd';X.lineWidth=5;X.beginPath();X.moveTo(-90,102);X.lineTo(90,102);X.stroke();
-  for(let i=0;i<4;i++){const x=-90+i*60,on=i===c.i;circ(x,102,on?18:12,i<=c.i?SECTIONS[i].col:'#ddd');txt(SECTIONS[i].icon,x,103,on?18:11,'#000')}
-  txt('⛺',118,102,22,'#000');X.restore()}
+  for(let i=0;i<5;i++){const x=-100+i*50,on=i===c.i;circ(x,102,on?16:11,i<=c.i?SECTIONS[i].col:'#ddd');txt(SECTIONS[i].icon,x,103,on?16:10,'#000')}
+  txt('⛺',130,102,20,'#000');X.restore()}
 // ---------- screens ----------
 let titleUI={};
-function titleTap(p){if(titleUI.tilt&&inRect(p,titleUI.tilt))return;if(titleUI.go&&inRect(p,titleUI.go)){AUD.SFX.splash(true);startGame();return}
+function titleTap(p){if(titleUI.tilt&&inRect(p,titleUI.tilt))return;if(titleUI.diff&&inRect(p,titleUI.diff)){hard=!hard;localStorage.setItem('wwp_hard',hard?'1':'0');AUD.SFX.boing();return}if(titleUI.go&&inRect(p,titleUI.go)){AUD.SFX.splash(true);startGame();return}
   if(titleUI.mute&&inRect(p,titleUI.mute)){AUD.setMuted(!AUD.muted);return}
   for(const[k,r]of Object.entries(titleUI)){if(k.startsWith('hA')&&inRect(p,r)){hatA=+k.slice(2);localStorage.setItem('wwp_hatA',hatA);AUD.SFX.boing()}if(k.startsWith('hZ')&&inRect(p,r)){hatZ=+k.slice(2);localStorage.setItem('wwp_hatZ',hatZ);AUD.SFX.boing()}}
   if(!titleUI.ahoyed&&AUD.unlocked){titleUI.ahoyed=1;setTimeout(()=>AUD.say('ahoy',2),300)}AUD.setTheme('title')}
@@ -659,6 +666,8 @@ function drawTitle(){dist+=40/60;fillDecor();drawWorld();
   const gy=Math.min(H-100-SAFE_B,py+110);const pulse=1+Math.sin(T*5)*0.05;X.save();X.translate(W/2,gy);X.scale(pulse,pulse);rrect(-100,-40,200,80,40);X.fillStyle='#35c46a';X.fill();X.lineWidth=6;X.strokeStyle='#fff';X.stroke();
   txt('GO! ▶',0,3,44,'#fff','center','#1b7a3c');X.restore();titleUI.go=[W/2-110,gy-48,220,96];
   txt('🏆 '+best,W/2,gy+66,22,'#fff','center','#1d2b4f');
+  const nb=Object.keys(badges).length;txt('🏅 '+nb,W/2,gy+92,16,'#fff','center','#1d2b4f');
+  rrect(W/2-160,gy-48,70,40,20);X.fillStyle=hard?'#e53935':'#29b6f6';X.fill();X.strokeStyle='#fff';X.lineWidth=3;X.stroke();txt(hard?'HARD':'NORMAL',W/2-125,gy-28,13,'#fff');titleUI.diff=[W/2-160,gy-48,70,40];
   const bb=H-SAFE_B;if(canTilt){titleUI.tilt=[8,bb-58,50,50];circ(33,bb-33,24,tiltOn?'#35c46a':'rgba(255,255,255,0.85)');txt('📱',33,bb-32,22,'#000');if(tiltOn)txt('↔',33,bb-62,16,'#fff','center','#1b7a3c')}
   titleUI.mute=[W-58,bb-58,50,50];circ(W-33,bb-33,24,'rgba(255,255,255,0.85)');txt(AUD.muted?'🔇':'🔊',W-33,bb-32,24,'#000');
   drawParts()}
@@ -670,7 +679,7 @@ function drawEnd(){drawWorld();X.fillStyle='rgba(20,30,70,0.35)';X.fillRect(-XL,
   row('💦','Splashes',splashes);row('🪙','Treasure',treasure);row('⭐','Score',score);row('🤣',"Dad's Funniest Splashes",dadFalls);
   if(dadFalls>=2){X.save();X.translate(W/2,y+30);X.rotate(Math.sin(T*3)*0.05);txt('🏆',-118,0,44,'#000');txt('Grand Prize:',18,-12,20,'#e53935');txt('$10,000?!',18,14,26,'#e53935','center','#ffd23f');X.restore();y+=72}
   else{txt('📼 Dad is camera-ready!',W/2,y+10,17,'#7e57c2');y+=36}
-  if(score>=best&&score>0){txt('NEW BEST! 🏆 '+best,W/2,y,20,'#43a047');}else txt('🏆 Best: '+best,W/2,y,18,'#1d2b4f');
+  if(score>=best&&score>0){txt('NEW BEST! 🏆 '+best,W/2,y,20,'#43a047');}else txt('🏆 Best: '+best+(hard?' · HARD':''),W/2,y,18,'#1d2b4f');y+=28;txt('🏅 Badges '+Object.keys(badges).length,W/2,y,16,'#7e57c2');
   const by=py+ph-62;ui.again=[W/2-30,by-34,170,68];rrect(W/2-30,by-34,170,68,34);X.fillStyle='#35c46a';X.fill();X.lineWidth=5;X.strokeStyle='#fff';X.stroke();txt('AGAIN ↻',W/2+55,by+2,28,'#fff','center','#1b7a3c');
   ui.home=[W/2-150,by-34,100,68];rrect(W/2-150,by-34,100,68,34);X.fillStyle='#29b6f6';X.fill();X.strokeStyle='#fff';X.stroke();txt('🏠',W/2-100,by+2,30,'#000');
   X.restore();drawParts()}

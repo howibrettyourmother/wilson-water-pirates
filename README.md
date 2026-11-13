@@ -12,3 +12,6 @@ Play: https://howibrettyourmother.github.io/wilson-water-pirates/
 
 ## Per-kid saves (v1.4, Nov 2026)
 Best score, Normal/Hard and badges are saved per kid (`wwp_alex_*`, `wwp_zoe_*`) using `?kid=` from the hubs (or the last kid who played). Old per-device saves were copied to Alex once, so Zoe no longer inherits Alex's Hard mode. Hat colors stay shared because both kids ride in the canoe.
+
+## iPad landscape (v1.5, Nov 2026)
+In landscape the river widens (up to 1.5×) to fill the screen, with a bit more to splash so it never feels empty. The title screen gets a landscape layout: hat pickers on the left, the canoe in the middle, and GO, Normal/Hard and best score on the right, so nothing overlaps. Shorter portrait screens use a compact layout that keeps the GO button clear of the hat rows.

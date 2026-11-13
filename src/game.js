@@ -1,11 +1,12 @@
 (()=>{
 const cv=document.getElementById('c'),X=cv.getContext('2d');
 const DEBUG=/[?&]debug=1/.test(location.search);
-let W=400,H=760,DPR=1,SC=1,OX=0,XL=0,SAFE_T=0,SAFE_B=0;
+let W=400,H=760,DPR=1,SC=1,OX=0,XL=0,SAFE_T=0,SAFE_B=0,RK=1,LAND=false;
 // safe-area probe: in standalone (Home Screen) mode the canvas runs under the status bar / notch / home indicator
 const safeEl=document.createElement('div');safeEl.style.cssText='position:fixed;left:0;top:0;width:0;height:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;pointer-events:none;visibility:hidden';document.body.appendChild(safeEl);
 const SAFE_DBG=DEBUG&&(location.search.match(/[?&]safe=(\d+),(\d+)/)||null);
-function resize(){const vw=innerWidth,vh=innerHeight;DPR=Math.min(devicePixelRatio||1,Math.min(vw,vh)>=700?1.5:2.5);SC=Math.min(vw/400,vh/600);W=400;H=vh/SC;OX=(vw-400*SC)/2;XL=OX/SC; // iPad landscape: full-height 400-wide play column, river scenery fills the sides
+function resize(){const vw=innerWidth,vh=innerHeight;DPR=Math.min(devicePixelRatio||1,Math.min(vw,vh)>=700?1.5:2.5);SC=Math.min(vw/400,vh/600);W=400;H=vh/SC;OX=(vw-400*SC)/2;XL=OX/SC; // iPad landscape: full-height 400-wide core column plus side space
+  LAND=XL>=120;RK=LAND?Math.min(1.5,Math.max(1,1+(XL-80)/340)):1; // landscape: the river (and the play area) widens to fill the screen
   const cs=getComputedStyle(safeEl),st=SAFE_DBG?+SAFE_DBG[1]:parseFloat(cs.paddingTop)||0,sb=SAFE_DBG?+SAFE_DBG[2]:parseFloat(cs.paddingBottom)||0;SAFE_T=st/SC;SAFE_B=sb/SC;
   cv.width=Math.round(vw*DPR);cv.height=Math.round(vh*DPR);cv.style.width=vw+'px';cv.style.height=vh+'px'}
 addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,250));resize();setTimeout(resize,300);
@@ -28,8 +29,8 @@ const SECTIONS=[
  {n:'Beaver Rapids',icon:'🦫',col:'#8d5a2b',at:0.42,water:['#45c3ea','#2a9fd0'],grass:'#6cc653',sand:'#ead08a',sky:null},
  {n:'Pirate Cove',icon:'🏴‍☠️',col:'#7e57c2',at:0.62,water:['#3aa8c8','#246a9a'],grass:'#5a9a4a',sand:'#e8c878',sky:null},
  {n:'Sunset Camp',icon:'🌅',col:'#ff5ca8',at:0.82,water:['#f6a96b','#c779a8'],grass:'#7fb85a',sand:'#f2c58a',sky:1}];
-function riverC(wy){return 200+Math.sin(wy*0.0021)*62+Math.sin(wy*0.00083+1)*30}
-function riverW(wy){const p=wy/(RUN*112);const pond=(p>0.27&&p<0.47)?Math.sin((p-0.27)/0.2*Math.PI)*60:0;return 255+Math.sin(wy*0.0013)*20+pond}
+function riverC(wy){return 200+(Math.sin(wy*0.0021)*62+Math.sin(wy*0.00083+1)*30)*RK}
+function riverW(wy){const p=wy/(RUN*112);const pond=(p>0.27&&p<0.47)?Math.sin((p-0.27)/0.2*Math.PI)*60:0;return (255+Math.sin(wy*0.0013)*20+pond)*RK}
 const CY=()=>H*0.7; // canoe center screen y
 const sy=wy=>CY()-(wy-dist);
 let zCount=0,lastNumT=-99;
@@ -57,13 +58,13 @@ function spawnTarget(k,x,wy){const d=TGT[k];const o={type:'t',k,x,wy,r:d.r,hp:d.
   objs.push(o);return o}
 function sectionIx(){const p=runT/RUN;let s=0;SECTIONS.forEach((S,i)=>{if(p>=S.at)s=i});return s}
 function spawnStuff(dt){if(runT>RUN-6)return;const wy=dist+CY()+70,c=riverC(wy),w=riverW(wy),s=sectionIx();
-  if(card&&card.t<2.4)return;spawnT-=dt;if(spawnT<=0){spawnT=(rr(1.1,1.8)-s*0.1)*(hard?0.72:1);
+  if(card&&card.t<2.4)return;spawnT-=dt;if(spawnT<=0){spawnT=(rr(1.1,1.8)-s*0.1)*(hard?0.72:1)/Math.sqrt(RK);
     const pool=[['duck','duck','paddler','tuber','frog','fish','bear','sprinkler'],['duck','duck','duck','frog','frog','paddler','tuber','fish','bear'],['beaver','paddler','raft','duck','tuber','fish','bear','frog','sprinkler'],['crab','crab','duck','paddler','raft','fish','bear','frog','sprinkler'],['duck','paddler','tuber','raft','fish','bear','frog','crab']][s];
     const k=pick(pool);const def=TGT[k];
     if(def.bank){const side=R()<0.5?-1:1;spawnTarget(k,c+side*(w/2+22),wy).side=side}
     else if(k==='beaver'){const side=R()<0.5?-1:1;const o=spawnTarget(k,c+side*(w/2-34),wy);o.side=side}
     else spawnTarget(k,c+rr(-w/2+30,w/2-30),wy)}
-  treasureT-=dt;if(treasureT<=0){treasureT=rr(0.9,1.6);let k=pick(['coin','coin','coin','ducky','popsicle','smore','cherry','icecream','beachball']);if(R()<0.06)k='chest';
+  treasureT-=dt;if(treasureT<=0){treasureT=rr(0.9,1.6)/Math.sqrt(RK);let k=pick(['coin','coin','coin','ducky','popsicle','smore','cherry','icecream','beachball']);if(R()<0.06)k='chest';
     const lane=c+rr(-w/2+40,w/2-40);const n=k==='coin'?3+(R()*3|0):1;for(let i=0;i<n;i++)objs.push({type:'g',k,x:lane+Math.sin(i*0.8)*14,wy:wy+i*34,r:k==='chest'?22:16,ph:R()*9})}
   obstT-=dt;if(obstT<=0){obstT=(rr(3.0,4.4)-s*0.3)*(hard?0.75:1);const k=s===2?pick(['rock','log','rapids','rapids']):pick(['rock','rock','log','rapids']);
     const side=R()<0.5?-1:1;const x=c+side*rr(w*0.12,w*0.36);objs.push({type:'o',k,x,wy,r:k==='log'?18:k==='rapids'?44:22,ph:R()*9,ang:rr(-0.3,0.3),len:rr(70,95)})}
@@ -504,25 +505,44 @@ function titleTap(p){if(titleUI.tilt&&inRect(p,titleUI.tilt))return;if(titleUI.d
   for(const[k,r]of Object.entries(titleUI)){if(k.startsWith('hA')&&inRect(p,r)){hatA=+k.slice(2);localStorage.setItem('wwp_hatA',hatA);AUD.SFX.boing()}if(k.startsWith('hZ')&&inRect(p,r)){hatZ=+k.slice(2);localStorage.setItem('wwp_hatZ',hatZ);AUD.SFX.boing()}}
   if(!titleUI.ahoyed&&AUD.unlocked){titleUI.ahoyed=1;setTimeout(()=>AUD.say('ahoy',2),300)}AUD.setTheme('title')}
 function drawTitle(){dist+=40/60;fillDecor();drawWorld();
-  const g=X.createLinearGradient(0,0,0,H*0.3);g.addColorStop(0,'rgba(130,210,255,0.95)');g.addColorStop(1,'rgba(130,210,255,0)');X.fillStyle=g;X.fillRect(0,0,W,H*0.3);
+  const g=X.createLinearGradient(0,0,0,H*0.3);g.addColorStop(0,'rgba(130,210,255,0.95)');g.addColorStop(1,'rgba(130,210,255,0)');X.fillStyle=g;X.fillRect(-XL,0,W+2*XL,H*0.3);
   circ(W-60,70,30,'#ffe066');circ(W-60,70,40,'rgba(255,230,100,0.3)');
   const ty=Math.max(60,H*0.1)+SAFE_T;X.save();X.translate(W/2,ty);X.rotate(-0.04+Math.sin(T*1.5)*0.015);
   txt('The',0,-30,24,'#fff','center','#1d2b4f');txt('WILSON WATER',0,6,44,'#ffd23f','center','#1d2b4f');txt('PIRATES',0,52,58,'#ff5ca8','center','#1d2b4f');X.restore();
-  canoe.armA=0;canoe.armZ=0;const cy=H*0.52;drawFamily(W/2,cy,Math.sin(T*1.6)*0.06,{cheer:Math.sin(T*1.2)>0.6?1:0});
+  if(LAND){drawTitleLand();return}
+  canoe.armA=0;canoe.armZ=0;const CMP=H<720,cy=CMP?Math.max(H*0.40,232+SAFE_T):H*0.52;drawFamily(W/2,cy,Math.sin(T*1.6)*0.06,{cheer:Math.sin(T*1.2)>0.6?1:0});
   // name tags
   txt('Alex',W/2+92,cy-58,18,'#fff','center','#1d2b4f');txt('Zoe',W/2+86,cy-2,18,'#fff','center','#1d2b4f');txt('Dad',W/2+86,cy+52,18,'#fff','center','#1d2b4f');
   // hat pickers
-  const py=H*0.52+120;titleUI={ahoyed:titleUI.ahoyed,tilt:titleUI.tilt};
+  const py=cy+(CMP?108:120);titleUI={ahoyed:titleUI.ahoyed,tilt:titleUI.tilt};
   [['A',hatA,'alex'],['Z',hatZ,'zoe']].forEach(([w,sel,who],row)=>{const y=py+row*50;drawKid(34,y+10,who,{s:0.75,happy:true,noBalloon:true});
     HATS.forEach((c,i)=>{const x=78+i*44;const r=[x-19,y-19,38,38];titleUI['h'+w+i]=r;circ(x,y,sel===i?19:15,c);if(sel===i){X.lineWidth=4;X.strokeStyle='#fff';X.beginPath();X.arc(x,y,19,0,TAU);X.stroke()}})});
   // GO
-  const gy=Math.min(H-100-SAFE_B,py+110);const pulse=1+Math.sin(T*5)*0.05;X.save();X.translate(W/2,gy);X.scale(pulse,pulse);rrect(-100,-40,200,80,40);X.fillStyle='#35c46a';X.fill();X.lineWidth=6;X.strokeStyle='#fff';X.stroke();
+  const gy=CMP?py+124:Math.min(H-100-SAFE_B,py+110);const pulse=1+Math.sin(T*5)*0.05;X.save();X.translate(W/2,gy);X.scale(pulse,pulse);rrect(-100,-40,200,80,40);X.fillStyle='#35c46a';X.fill();X.lineWidth=6;X.strokeStyle='#fff';X.stroke();
   txt('GO! ▶',0,3,44,'#fff','center','#1b7a3c');X.restore();titleUI.go=[W/2-110,gy-48,220,96];
   txt('🏆 '+best,W/2,gy+66,22,'#fff','center','#1d2b4f');
   const nb=Object.keys(badges).length;txt('🏅 '+nb,W/2,gy+92,16,'#fff','center','#1d2b4f');
-  rrect(W/2-160,gy-48,70,40,20);X.fillStyle=hard?'#e53935':'#29b6f6';X.fill();X.strokeStyle='#fff';X.lineWidth=3;X.stroke();txt(hard?'HARD':'NORMAL',W/2-125,gy-28,13,'#fff');titleUI.diff=[W/2-160,gy-48,70,40];
+  rrect(W/2-176,gy-48,70,40,20);X.fillStyle=hard?'#e53935':'#29b6f6';X.fill();X.strokeStyle='#fff';X.lineWidth=3;X.stroke();txt(hard?'HARD':'NORMAL',W/2-141,gy-28,13,'#fff');titleUI.diff=[W/2-176,gy-48,70,40];
   const bb=H-SAFE_B;if(canTilt){titleUI.tilt=[8,bb-58,50,50];circ(33,bb-33,24,tiltOn?'#35c46a':'rgba(255,255,255,0.85)');txt('📱',33,bb-32,22,'#000');if(tiltOn)txt('↔',33,bb-62,16,'#fff','center','#1b7a3c')}
   titleUI.mute=[W-58,bb-58,50,50];circ(W-33,bb-33,24,'rgba(255,255,255,0.85)');txt(AUD.muted?'🔇':'🔊',W-33,bb-32,24,'#000');
+  drawParts()}
+// landscape title: canoe in the middle, hat pickers on the left, GO + options on the right (nothing overlaps)
+function drawTitleLand(){canoe.armA=0;canoe.armZ=0;const cy=Math.max(H*0.58,170+SAFE_T+100);drawFamily(W/2,cy,Math.sin(T*1.6)*0.06,{cheer:Math.sin(T*1.2)>0.6?1:0});
+  txt('Alex',W/2+92,cy-58,18,'#fff','center','#1d2b4f');txt('Zoe',W/2+86,cy-2,18,'#fff','center','#1d2b4f');txt('Dad',W/2+86,cy+52,18,'#fff','center','#1d2b4f');
+  titleUI={ahoyed:titleUI.ahoyed,tilt:titleUI.tilt};
+  // left panel: hats
+  const lx=-XL+18,lw=Math.min(XL+110,360),sp=Math.min(40,(lw-86)/6.4),y0=H*0.42;rrect(lx,y0-58,lw,150,28);X.fillStyle='rgba(255,255,255,0.55)';X.fill();
+  txt('Pick your hat!',lx+lw/2,y0-34,18,'#fff','center','#1d2b4f');
+  [['A',hatA,'alex'],['Z',hatZ,'zoe']].forEach(([w,sel,who],row)=>{const y=y0+8+row*52;drawKid(lx+30,y+10,who,{s:0.75,happy:true,noBalloon:true});
+    HATS.forEach((c,i)=>{const x=lx+72+i*sp;const r=[x-sp/2,y-20,sp,40];titleUI['h'+w+i]=r;circ(x,y,sel===i?17:13,c);if(sel===i){X.lineWidth=4;X.strokeStyle='#fff';X.beginPath();X.arc(x,y,17,0,TAU);X.stroke()}})});
+  // right panel: GO, difficulty, best
+  const rx=Math.min(400+XL/2,W+XL-120),gy=H*0.42;const pulse=1+Math.sin(T*5)*0.05;X.save();X.translate(rx,gy);X.scale(pulse,pulse);rrect(-100,-40,200,80,40);X.fillStyle='#35c46a';X.fill();X.lineWidth=6;X.strokeStyle='#fff';X.stroke();
+  txt('GO! ▶',0,3,44,'#fff','center','#1b7a3c');X.restore();titleUI.go=[rx-110,gy-48,220,96];
+  const dy=gy+78;rrect(rx-60,dy-22,120,44,22);X.fillStyle=hard?'#e53935':'#29b6f6';X.fill();X.strokeStyle='#fff';X.lineWidth=3;X.stroke();txt(hard?'HARD':'NORMAL',rx,dy+1,16,'#fff');titleUI.diff=[rx-64,dy-26,128,52];
+  txt('🏆 '+best+'   🏅 '+Object.keys(badges).length,rx,dy+50,20,'#fff','center','#1d2b4f');
+  if(typeof drawTogetherBtn==='function')drawTogetherBtn(rx,dy+104);
+  const bb=H-SAFE_B;if(canTilt){titleUI.tilt=[-XL+8,bb-58,50,50];circ(-XL+33,bb-33,24,tiltOn?'#35c46a':'rgba(255,255,255,0.85)');txt('📱',-XL+33,bb-32,22,'#000');if(tiltOn)txt('↔',-XL+33,bb-62,16,'#fff','center','#1b7a3c')}
+  titleUI.mute=[W+XL-58,bb-58,50,50];circ(W+XL-33,bb-33,24,'rgba(255,255,255,0.85)');txt(AUD.muted?'🔇':'🔊',W+XL-33,bb-32,24,'#000');
   drawParts()}
 function drawEnd(){drawWorld();X.fillStyle='rgba(20,30,70,0.35)';X.fillRect(-XL,0,W+2*XL,H);const k=ease(endT*2);X.save();X.translate(W/2,H*0.5);X.scale(k,k);X.translate(-W/2,-H*0.5);
   const pw=W-30,ph=Math.min(H-60-SAFE_T-SAFE_B,600),px=15,py=SAFE_T+(H-SAFE_T-SAFE_B-ph)/2;rrect(px,py,pw,ph,30);X.fillStyle='rgba(255,252,240,0.97)';X.fill();X.lineWidth=6;X.strokeStyle='#ffd23f';X.stroke();

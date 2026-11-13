@@ -14,7 +14,11 @@ const ease=t=>t<0?0:t>1?1:1-Math.pow(1-t,3);
 // ---------------- state ----------------
 const HATS=['#e53935','#1e88e5','#8e24aa','#43a047','#fb8c00','#ec407a','#fdd835'];
 let hatA=+(localStorage.getItem('wwp_hatA')||0),hatZ=+(localStorage.getItem('wwp_hatZ')||2);
-let best=+(localStorage.getItem('wwp_best')||0),hard=localStorage.getItem('wwp_hard')==='1',badges=JSON.parse(localStorage.getItem('wwp_badges')||'{}');
+// per-kid saves (wwp_<kid>_best/hard/badges): ?kid= from the hubs, else the last kid; old per-device saves are copied to Alex once
+const KID=(()=>{let k=null;try{k=new URLSearchParams(location.search).get('kid')}catch(e){}if(k==='alex'||k==='zoe'){try{localStorage.setItem('wwp_kid',k)}catch(e){}return k}try{k=localStorage.getItem('wwp_kid')}catch(e){}return k==='zoe'?'zoe':'alex'})();
+const KS={get(k,d){try{const v=localStorage.getItem('wwp_'+KID+'_'+k);return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem('wwp_'+KID+'_'+k,v)}catch(e){}}};
+try{if(!localStorage.getItem('wwp_mig_kid')){['best','hard','badges'].forEach(k=>{const v=localStorage.getItem('wwp_'+k);if(v!=null&&localStorage.getItem('wwp_alex_'+k)==null)localStorage.setItem('wwp_alex_'+k,v)});localStorage.setItem('wwp_mig_kid','1')}}catch(e){}
+let best=+(KS.get('best',0)||0),hard=KS.get('hard','0')==='1',badges=(()=>{try{return JSON.parse(KS.get('badges','{}'))||{}}catch(e){return{}}})();
 let state='title',T=0,runT=0,dist=0,speed=0;const RUN=185;
 let card=null,TS=1,seen=[],cards=0,bumps=0,tiltOn=false,tiltG=null;
 let canoe,objs,shots,parts,floats,decor,hearts,regen,shooter,score,splashes,treasure,dadFalls,missStreak,lastPraise,lastMiss,nextBig,section,banner,dadSeq,endT,shake,spawnT,treasureT,obstT,decorY,camp;
@@ -91,7 +95,7 @@ const canTilt=('DeviceOrientationEvent' in window)&&(('ontouchstart' in window)|
 addEventListener('keydown',e=>{if(state!=='play')return;if(e.key==='ArrowLeft')canoe.tx-=40;if(e.key==='ArrowRight')canoe.tx+=40;if(e.key===' ')switchShooter()});
 function switchShooter(){shooter=shooter==='alex'?'zoe':'alex';AUD.SFX.boing();floatText(shooter==='alex'?'Alex!':'Zoe!',ui.sw[0]+50,ui.sw[1]-10,shooter==='alex'?HATS[hatA]:HATS[hatZ])}
 function seatPos(who){const c=canoeGeom();return who==='alex'?{x:c.x+Math.sin(c.a)*46,y:c.y-46}:who==='zoe'?{x:c.x,y:c.y}:{x:c.x-Math.sin(c.a)*46,y:c.y+46}}
-const AUTOZ=/[?&]kid=zoe/.test(location.search);let autoT=1.5;
+const AUTOZ=KID==='zoe';let autoT=1.5;
 function canoeGeom(){return{x:canoe.x,y:CY()+Math.sin(T*2.2)*2,a:canoe.tilt}}
 function fire(x,y){// aim assist: snap to nearest live target near the tap
   let bestO=null,bd=shooter==='zoe'?135:110;for(const o of objs){if(o.type!=='t'||o.hit>=o.hp)continue;const d=Math.hypot(o.x-x,sy(o.wy)-y);if(d<bd){bd=d;bestO=o}}
@@ -190,11 +194,11 @@ function updateDad(dt){const d=dadSeq,t0=d.t;d.t+=dt;const t=d.t;const at=x=>t0<
   if(at(10.6)){AUD.say(pick(['t3','yay','t1']),2)}
   if(t>11.6){state='play';dadSeq=null;hearts=hard?2:3;canoe.inv=2.5;objs=objs.filter(o=>!(o.type==='o'&&Math.abs(sy(o.wy)-CY())<200))}}
 // ---------------- end ----------------
-function earnBadge(k){if(badges[k])return;badges[k]=1;try{localStorage.setItem('wwp_badges',JSON.stringify(badges))}catch(e){}AUD.SFX.boing();floatText('🏅',W/2,H*0.28,'#ffd23f')}
+function earnBadge(k){if(badges[k])return;badges[k]=1;KS.set('badges',JSON.stringify(badges));AUD.SFX.boing();floatText('🏅',W/2,H*0.28,'#ffd23f')}
 function stars(){return score>=2000?3:score>=800?2:1}
 function finish(){state='end';endT=0;AUD.setTheme('end');AUD.SFX.fanfare();AUD.SFX.cheer();setTimeout(()=>AUD.say('camp',2),600);setTimeout(()=>AUD.say(pick(['t2','t1','t3']),2),2600);
   earnBadge('camp');if(splashes>=30)earnBadge('splash30');if(treasure>=20)earnBadge('loot20');if(dadFalls>=2)earnBadge('dadcam');if(hard)earnBadge('hardrun');if(stars()>=3)earnBadge('star3');
-  if(score>best){best=score;localStorage.setItem('wwp_best',best)}confetti(80)}
+  if(score>best){best=score;KS.set('best',best)}confetti(80)}
 // ================= DRAWING =================
 function rrect(x,y,w,h,r){X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath()}
 function circ(x,y,r,fill){X.beginPath();X.arc(x,y,r,0,TAU);X.fillStyle=fill;X.fill()}
@@ -495,7 +499,7 @@ function drawCard(){const c=card,t=c.t,k=ease(t*2.5),out=t>2.3?ease((t-2.3)*3):0
   txt('⛺',130,102,20,'#000');X.restore()}
 // ---------- screens ----------
 let titleUI={};
-function titleTap(p){if(titleUI.tilt&&inRect(p,titleUI.tilt))return;if(titleUI.diff&&inRect(p,titleUI.diff)){hard=!hard;localStorage.setItem('wwp_hard',hard?'1':'0');AUD.SFX.boing();return}if(titleUI.go&&inRect(p,titleUI.go)){AUD.SFX.splash(true);startGame();return}
+function titleTap(p){if(titleUI.tilt&&inRect(p,titleUI.tilt))return;if(titleUI.diff&&inRect(p,titleUI.diff)){hard=!hard;KS.set('hard',hard?'1':'0');AUD.SFX.boing();return}if(titleUI.go&&inRect(p,titleUI.go)){AUD.SFX.splash(true);startGame();return}
   if(titleUI.mute&&inRect(p,titleUI.mute)){AUD.setMuted(!AUD.muted);return}
   for(const[k,r]of Object.entries(titleUI)){if(k.startsWith('hA')&&inRect(p,r)){hatA=+k.slice(2);localStorage.setItem('wwp_hatA',hatA);AUD.SFX.boing()}if(k.startsWith('hZ')&&inRect(p,r)){hatZ=+k.slice(2);localStorage.setItem('wwp_hatZ',hatZ);AUD.SFX.boing()}}
   if(!titleUI.ahoyed&&AUD.unlocked){titleUI.ahoyed=1;setTimeout(()=>AUD.say('ahoy',2),300)}AUD.setTheme('title')}
@@ -546,5 +550,5 @@ reset();AUD.setTheme('title');requestAnimationFrame(frame);
 if(DEBUG)window.__W={get state(){return state},get score(){return score},get splashes(){return splashes},get treasure(){return treasure},get hearts(){return hearts},get dadFalls(){return dadFalls},get canoe(){return canoe},get shooter(){return shooter},get dad(){return dadSeq&&dadSeq.t},
   audio:AUD,start:startGame,objs:()=>objs,clear(){objs=[]},spawn(k,x,yScreen){return spawnTarget(k,x,dist+(CY()-yScreen))},gold(k,x,yScreen){objs.push({type:'g',k,x,wy:dist+(CY()-yScreen),r:16,ph:0})},
   rock(x,yScreen,k){objs.push({type:'o',k:k||'rock',x,wy:dist+(CY()-yScreen),r:k==='big'?40:22,ph:0,ang:0,len:80})},fire,switchShooter,set runT(v){runT=v},get runT(){return runT},dadGo(){startDad({})},setDad(t){if(dadSeq)dadSeq.t=t},end(){score=Math.max(score,960);splashes=Math.max(splashes,41);treasure=Math.max(treasure,27);dadFalls=Math.max(dadFalls,2);finish()},
-  freeze(){speed=0},get distV(){return dist},set TS(v){TS=v},get seen(){return seen},get cards(){return cards},get bumps(){return bumps},get card(){return card},get tiltOn(){return tiltOn},get stars(){return stars()},toggleTilt,toClient:(x,y)=>({x:x*SC+OX,y:y*SC}),CY,setScore(v){score=v}};
+  freeze(){speed=0},get distV(){return dist},set TS(v){TS=v},get seen(){return seen},get cards(){return cards},get bumps(){return bumps},get card(){return card},get tiltOn(){return tiltOn},get KID(){return KID},get hard(){return hard},get best(){return best},get stars(){return stars()},toggleTilt,toClient:(x,y)=>({x:x*SC+OX,y:y*SC}),CY,setScore(v){score=v}};
 })();

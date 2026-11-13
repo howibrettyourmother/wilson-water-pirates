@@ -9,3 +9,6 @@ A cheerful, wholesome canoe-splashing game for Alex (6) and Zoe (4). Float down 
 - Original WebAudio pirate-jig music (ukulele, glockenspiel, kazoo), cheerful voice lines.
 
 Play: https://howibrettyourmother.github.io/wilson-water-pirates/
+
+## Per-kid saves (v1.4, Nov 2026)
+Best score, Normal/Hard and badges are saved per kid (`wwp_alex_*`, `wwp_zoe_*`) using `?kid=` from the hubs (or the last kid who played). Old per-device saves were copied to Alex once, so Zoe no longer inherits Alex's Hard mode. Hat colors stay shared because both kids ride in the canoe.

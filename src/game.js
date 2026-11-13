@@ -17,8 +17,9 @@ const HATS=['#e53935','#1e88e5','#8e24aa','#43a047','#fb8c00','#ec407a','#fdd835
 let hatA=+(localStorage.getItem('wwp_hatA')||0),hatZ=+(localStorage.getItem('wwp_hatZ')||2);
 // per-kid saves (wwp_<kid>_best/hard/badges): ?kid= from the hubs, else the last kid; old per-device saves are copied to Alex once
 const KID=(()=>{let k=null;try{k=new URLSearchParams(location.search).get('kid')}catch(e){}if(k==='alex'||k==='zoe'){try{localStorage.setItem('wwp_kid',k)}catch(e){}return k}try{k=localStorage.getItem('wwp_kid')}catch(e){}return k==='zoe'?'zoe':'alex'})();
-const KS={get(k,d){try{const v=localStorage.getItem('wwp_'+KID+'_'+k);return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem('wwp_'+KID+'_'+k,v)}catch(e){}}};
-try{if(!localStorage.getItem('wwp_mig_kid')){['best','hard','badges'].forEach(k=>{const v=localStorage.getItem('wwp_'+k);if(v!=null&&localStorage.getItem('wwp_alex_'+k)==null)localStorage.setItem('wwp_alex_'+k,v)});localStorage.setItem('wwp_mig_kid','1')}}catch(e){}
+const KS=KIDS.store('wwp',{kid:KID,migrate:['best','hard','badges']}); // shared kids-lib (vendored src/kids.js): wwp_<kid>_<key>, old device saves -> Alex once
+// Together mode: Alex steers + squirts, Zoe has her own big balloon button (auto-aim). ?mode=together or the title toggle.
+let TOGETHER=/[?&]mode=together/.test(location.search)||(()=>{try{return localStorage.getItem('wwp_together')==='1'}catch(e){return false}})();const KT=KIDS.store('wwp',{kid:'team'});
 let best=+(KS.get('best',0)||0),hard=KS.get('hard','0')==='1',badges=(()=>{try{return JSON.parse(KS.get('badges','{}'))||{}}catch(e){return{}}})();
 let state='title',T=0,runT=0,dist=0,speed=0;const RUN=185;
 let card=null,TS=1,seen=[],cards=0,bumps=0,tiltOn=false,tiltG=null;
@@ -80,7 +81,8 @@ cv.addEventListener('pointerdown',e=>{e.preventDefault();const p=toGame(e);
   if(ui.mute&&inRect(p,ui.mute)){AUD.setMuted(!AUD.muted);return}
   if(card&&card.t<2.3)card.t=2.3;
   if(state!=='play'){if(dadSeq&&dadSeq.t>4.2&&dadSeq.t<9)dadSeq.t=Math.max(dadSeq.t,9.6);return}
-  if(ui.sw&&inRect(p,ui.sw)){switchShooter();return}
+  if(TOGETHER&&ui.zb&&inRect(p,ui.zb)){zoeThrow();return}
+  if(!TOGETHER&&ui.sw&&inRect(p,ui.sw)){switchShooter();return}
   const steer=p.y>CY()-40;ptrs[e.pointerId]={sx:p.x,sy:p.y,cx0:canoe.tx,steer};
   if(steer)canoe.tx=p.x;else fire(p.x,p.y)},{passive:false});
 cv.addEventListener('pointermove',e=>{const q=ptrs[e.pointerId];if(!q)return;const p=toGame(e);
@@ -96,7 +98,7 @@ const canTilt=('DeviceOrientationEvent' in window)&&(('ontouchstart' in window)|
 addEventListener('keydown',e=>{if(state!=='play')return;if(e.key==='ArrowLeft')canoe.tx-=40;if(e.key==='ArrowRight')canoe.tx+=40;if(e.key===' ')switchShooter()});
 function switchShooter(){shooter=shooter==='alex'?'zoe':'alex';AUD.SFX.boing();floatText(shooter==='alex'?'Alex!':'Zoe!',ui.sw[0]+50,ui.sw[1]-10,shooter==='alex'?HATS[hatA]:HATS[hatZ])}
 function seatPos(who){const c=canoeGeom();return who==='alex'?{x:c.x+Math.sin(c.a)*46,y:c.y-46}:who==='zoe'?{x:c.x,y:c.y}:{x:c.x-Math.sin(c.a)*46,y:c.y+46}}
-const AUTOZ=KID==='zoe';let autoT=1.5;
+const AUTOZ0=KID==='zoe';let AUTOZ=AUTOZ0&&!TOGETHER;let splA=0,splZ=0,zIdle=0,zCool=0;let autoT=1.5;
 function canoeGeom(){return{x:canoe.x,y:CY()+Math.sin(T*2.2)*2,a:canoe.tilt}}
 function fire(x,y){// aim assist: snap to nearest live target near the tap
   let bestO=null,bd=shooter==='zoe'?135:110;for(const o of objs){if(o.type!=='t'||o.hit>=o.hp)continue;const d=Math.hypot(o.x-x,sy(o.wy)-y);if(d<bd){bd=d;bestO=o}}
@@ -109,7 +111,7 @@ function impact(sh){const big=sh.k==='bal';const rad=big?88:44;let hitAny=false,
   if(nh>=2&&runT-lastPraise>1)if(AUD.say('t6',2))lastPraise=runT;
   if(big){AUD.SFX.pop();AUD.SFX.splash(true);burst(sh.ex,sh.ey,26,sh.col,1.4);ring(sh.ex,sh.ey,70)}else{burst(sh.ex,sh.ey,6,'#bff2ff',0.8);if(sh.lead)ring(sh.ex,sh.ey,30)}
   if(sh.lead||big){if(hitAny)missStreak=0;else{missStreak++;if(missStreak>=3&&runT-lastMiss>9&&runT-lastPraise>2.5){if(AUD.say(pick(['miss','miss2']),1)){lastMiss=runT;missStreak=0}}}}}
-function hitTarget(o,who){o.hit++;o.ht=0;splashes++;const oy=sy(o.wy);burst(o.x,oy,14,'#d8f6ff',1.1);ring(o.x,oy+6,o.r+30);
+function hitTarget(o,who){o.hit++;o.ht=0;splashes++;if(who==='zoe')splZ++;else splA++;const oy=sy(o.wy);burst(o.x,oy,14,'#d8f6ff',1.1);ring(o.x,oy+6,o.r+30);
   if(o.hit<o.hp){AUD.SFX.splash();floatText('SPLASH!',o.x,oy-30,'#fff');return}
   const pts=o.pts;score+=pts;floatText('+'+pts,o.x,oy-34,'#fff59d');
   const S=AUD.SFX;({duck:()=>S.quack(),frog:()=>S.ribbit(),paddler:()=>{S.laughMan();S.splash()},tuber:()=>{S.giggle(true);S.splash()},bear:()=>{S.laughMan();S.splash(true)},fish:()=>S.splash(),beaver:()=>{S.boing()},raft:()=>{S.giggle();S.cheer()},sprinkler:()=>S.splash()}[o.k]||S.splash)();
@@ -127,10 +129,13 @@ function ring(x,y,r){parts.push({ring:1,x,y,t:0,life:0.7,r})}
 function floatText(s,x,y,col){floats.push({s,x,y,t:0,col})}
 function confetti(n){for(let i=0;i<n;i++)parts.push({x:rr(0,W),y:rr(-60,-10),vx:rr(-40,40),vy:rr(60,180),life:rr(2,3.5),t:0,r:rr(4,7),col:pick(['#ff5ca8','#ffd23f','#7ee081','#5ec8ff','#c387ff','#ff8a3d']),conf:1,rot:R()*6})}
 // ---------------- update ----------------
-function startGame(){reset();state='play';AUD.setTheme('play');showCard(0);AUD.say('ahoy',2)}
+function startGame(){reset();AUTOZ=AUTOZ0&&!TOGETHER;splA=0;splZ=0;zIdle=0;zCool=0;if(TOGETHER){best=+(KT.get('best',0)||0)}else best=+(KS.get('best',0)||0);state='play';AUD.setTheme('play');showCard(0);AUD.say('ahoy',2)}
 function showCard(i){card={i,t:0};cards++;seen.push(i);setTimeout(()=>AUD.say('s'+(i+1),2),i?400:1700)}
-function goTitle(){state='title';AUD.setTheme('title')}
-function update(dt){T+=dt;
+function goTitle(){state='title';best=+(KS.get('best',0)||0);AUD.setTheme('title')}
+// Together mode: Zoe's balloon button. Auto-aims at the closest target ahead; never fails (throws ahead if the river is empty).
+function zoeThrow(){if(state!=='play'||zCool>0)return;zCool=0.55;zIdle=0;let b=null,bd=1e9;for(const o of objs){if(o.type!=='t'||o.hit>=o.hp)continue;const y=sy(o.wy);if(y<50||y>CY()-30)continue;const d=Math.hypot(o.x-canoe.x,CY()-y);if(d<bd){bd=d;b=o}}
+  const prev=shooter;shooter='zoe';if(b)fire(b.x,sy(b.wy));else fire(canoe.x+rr(-60,60),CY()-rr(160,260));shooter=prev;AUD.SFX.giggle(true)}
+function update(dt){T+=dt;if(TOGETHER&&state==='play'){zCool=Math.max(0,zCool-dt);zIdle+=dt}
   // Zoe mode (?kid=zoe from Zoe's hub): her squirter fires on its own at the nearest target; taps still work
   if(AUTOZ&&state==='play'&&(autoT-=dt)<=0){let b=null,bd=1e9;for(const o of objs){if(o.type!=='t'||o.hit>=o.hp)continue;const y=sy(o.wy);if(y<60||y>CY()-60)continue;const d=CY()-y;if(d<bd){bd=d;b=o}}
     if(b){autoT=1.25;fire(b.x,sy(b.wy))}else autoT=0.3}
@@ -199,7 +204,7 @@ function earnBadge(k){if(badges[k])return;badges[k]=1;KS.set('badges',JSON.strin
 function stars(){return score>=2000?3:score>=800?2:1}
 function finish(){state='end';endT=0;AUD.setTheme('end');AUD.SFX.fanfare();AUD.SFX.cheer();setTimeout(()=>AUD.say('camp',2),600);setTimeout(()=>AUD.say(pick(['t2','t1','t3']),2),2600);
   earnBadge('camp');if(splashes>=30)earnBadge('splash30');if(treasure>=20)earnBadge('loot20');if(dadFalls>=2)earnBadge('dadcam');if(hard)earnBadge('hardrun');if(stars()>=3)earnBadge('star3');
-  if(score>best){best=score;KS.set('best',best)}confetti(80)}
+  if(score>best){best=score;(TOGETHER?KT:KS).set('best',best)}if(TOGETHER)earnBadge('team');confetti(80)}
 // ================= DRAWING =================
 function rrect(x,y,w,h,r){X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath()}
 function circ(x,y,r,fill){X.beginPath();X.arc(x,y,r,0,TAU);X.fillStyle=fill;X.fill()}
@@ -428,9 +433,13 @@ function drawHUD(){const top=Math.max(8,SAFE_T+4);
   const py=top+58;rrect(40,py,W-80,12,6);X.fillStyle='rgba(255,255,255,0.6)';X.fill();const p=clamp(runT/RUN,0,1);rrect(40,py,(W-80)*p+6,12,6);X.fillStyle='#29b6f6';X.fill();
   SECTIONS.forEach(S=>{circ(40+(W-80)*S.at,py+6,4,'#fff')});txt('⛺',W-30,py+5,20,'#000');ell(40+(W-80)*p,py+6,8,5,'#d9472b');
   // shooter switch button
-  const bx=14,by=H-118-SAFE_B;ui.sw=[bx,by,100,104];rrect(bx,by,100,104,26);X.fillStyle=shooter==='alex'?'rgba(53,196,106,0.92)':'rgba(255,92,168,0.92)';X.fill();X.strokeStyle='#fff';X.lineWidth=4;X.stroke();
+  if(TOGETHER){ui.sw=null;const zw=124,zh=128,bx=W-zw-14,by=H-zh-12-SAFE_B,pu=zIdle>7?1+Math.sin(T*8)*0.06:1;ui.zb=[bx,by,zw,zh];X.save();X.translate(bx+zw/2,by+zh/2);X.scale(pu,pu);X.translate(-(bx+zw/2),-(by+zh/2));
+    rrect(bx,by,zw,zh,30);X.fillStyle=zCool>0?'rgba(255,140,200,0.85)':'rgba(255,92,168,0.95)';X.fill();X.strokeStyle='#fff';X.lineWidth=5;X.stroke();drawKid(bx+zw/2,by+zh/2+12,'zoe',{s:1.7,happy:true,noBalloon:true});
+    txt('🎈',bx+zw-20,by+22,28,'#000');txt('ZOE',bx+30,by+22,18,'#fff','center','#b0306f');txt(String(splZ),bx+zw/2,by+zh-12,20,'#fff','center','#b0306f');X.restore();
+    if(state==='play'&&runT<7){X.globalAlpha=Math.min(1,7-runT);txt('Zoe: tap 🎈!',bx+zw/2,by-22,20,'#fff','center','#b0306f');X.globalAlpha=1}}
+  else{ui.zb=null;  const bx=14,by=H-118-SAFE_B;ui.sw=[bx,by,100,104];rrect(bx,by,100,104,26);X.fillStyle=shooter==='alex'?'rgba(53,196,106,0.92)':'rgba(255,92,168,0.92)';X.fill();X.strokeStyle='#fff';X.lineWidth=4;X.stroke();
   drawKid(bx+50,by+62,shooter,{s:1.5,happy:true,noBalloon:true});
-  txt(shooter==='alex'?'💦':'🎈',bx+86,by+18,22,'#000');txt('⇄',bx+16,by+18,22,'#fff','center','rgba(0,0,0,0.3)');
+  txt(shooter==='alex'?'💦':'🎈',bx+86,by+18,22,'#000');txt('⇄',bx+16,by+18,22,'#fff','center','rgba(0,0,0,0.3)');}
   // hint
   if(state==='play'&&runT<6){const a=Math.min(1,(6-runT));X.globalAlpha=a;const hx=280+Math.sin(T*3)*40;txt('👆',hx,CY()+90,40,'#000');txt('💦',200,CY()-230+Math.sin(T*4)*6,34,'#000');circ(200,CY()-230,40,'rgba(255,255,255,0.15)');X.globalAlpha=1}}
 function drawBanner(){if(!banner)return;const b=banner,k=ease(b.t*3),out=b.t>2.2?ease((b.t-2.2)*3):0;const y=H*0.32-out*40;X.save();X.globalAlpha=1-out;X.translate(W/2,y);X.scale(k,k);X.rotate(-0.04);
@@ -500,7 +509,7 @@ function drawCard(){const c=card,t=c.t,k=ease(t*2.5),out=t>2.3?ease((t-2.3)*3):0
   txt('⛺',130,102,20,'#000');X.restore()}
 // ---------- screens ----------
 let titleUI={};
-function titleTap(p){if(titleUI.tilt&&inRect(p,titleUI.tilt))return;if(titleUI.diff&&inRect(p,titleUI.diff)){hard=!hard;KS.set('hard',hard?'1':'0');AUD.SFX.boing();return}if(titleUI.go&&inRect(p,titleUI.go)){AUD.SFX.splash(true);startGame();return}
+function titleTap(p){if(titleUI.tilt&&inRect(p,titleUI.tilt))return;if(titleUI.tg&&inRect(p,titleUI.tg)){TOGETHER=!TOGETHER;try{localStorage.setItem('wwp_together',TOGETHER?'1':'0')}catch(e){}AUD.SFX.boing();if(TOGETHER)AUD.say('zoe',2);return}if(titleUI.diff&&inRect(p,titleUI.diff)){hard=!hard;KS.set('hard',hard?'1':'0');AUD.SFX.boing();return}if(titleUI.go&&inRect(p,titleUI.go)){AUD.SFX.splash(true);startGame();return}
   if(titleUI.mute&&inRect(p,titleUI.mute)){AUD.setMuted(!AUD.muted);return}
   for(const[k,r]of Object.entries(titleUI)){if(k.startsWith('hA')&&inRect(p,r)){hatA=+k.slice(2);localStorage.setItem('wwp_hatA',hatA);AUD.SFX.boing()}if(k.startsWith('hZ')&&inRect(p,r)){hatZ=+k.slice(2);localStorage.setItem('wwp_hatZ',hatZ);AUD.SFX.boing()}}
   if(!titleUI.ahoyed&&AUD.unlocked){titleUI.ahoyed=1;setTimeout(()=>AUD.say('ahoy',2),300)}AUD.setTheme('title')}
@@ -522,11 +531,14 @@ function drawTitle(){dist+=40/60;fillDecor();drawWorld();
   txt('GO! ▶',0,3,44,'#fff','center','#1b7a3c');X.restore();titleUI.go=[W/2-110,gy-48,220,96];
   txt('🏆 '+best,W/2,gy+66,22,'#fff','center','#1d2b4f');
   const nb=Object.keys(badges).length;txt('🏅 '+nb,W/2,gy+92,16,'#fff','center','#1d2b4f');
+  rrect(W/2+106,gy-48,70,40,20);X.fillStyle=TOGETHER?'#ff5ca8':'rgba(255,255,255,0.85)';X.fill();X.strokeStyle='#fff';X.lineWidth=3;X.stroke();txt('👫',W/2+128,gy-28,18,'#000');txt(TOGETHER?'ON':'2P',W/2+156,gy-27,13,TOGETHER?'#fff':'#1d2b4f');titleUI.tg=[W/2+102,gy-52,78,48];
   rrect(W/2-176,gy-48,70,40,20);X.fillStyle=hard?'#e53935':'#29b6f6';X.fill();X.strokeStyle='#fff';X.lineWidth=3;X.stroke();txt(hard?'HARD':'NORMAL',W/2-141,gy-28,13,'#fff');titleUI.diff=[W/2-176,gy-48,70,40];
   const bb=H-SAFE_B;if(canTilt){titleUI.tilt=[8,bb-58,50,50];circ(33,bb-33,24,tiltOn?'#35c46a':'rgba(255,255,255,0.85)');txt('📱',33,bb-32,22,'#000');if(tiltOn)txt('↔',33,bb-62,16,'#fff','center','#1b7a3c')}
   titleUI.mute=[W-58,bb-58,50,50];circ(W-33,bb-33,24,'rgba(255,255,255,0.85)');txt(AUD.muted?'🔇':'🔊',W-33,bb-32,24,'#000');
   drawParts()}
 // landscape title: canoe in the middle, hat pickers on the left, GO + options on the right (nothing overlaps)
+function drawTogetherBtn(x,y){const w=220,h=50;rrect(x-w/2,y-h/2,w,h,25);X.fillStyle=TOGETHER?'#ff5ca8':'rgba(255,255,255,0.88)';X.fill();X.strokeStyle='#fff';X.lineWidth=4;X.stroke();
+  txt('👫 Together: '+(TOGETHER?'ON':'OFF'),x,y+1,19,TOGETHER?'#fff':'#1d2b4f');titleUI.tg=[x-w/2-4,y-h/2-4,w+8,h+8];if(TOGETHER)txt('Alex steers & squirts · Zoe throws 🎈',x,y+42,14,'#fff','center','#1d2b4f')}
 function drawTitleLand(){canoe.armA=0;canoe.armZ=0;const cy=Math.max(H*0.58,170+SAFE_T+100);drawFamily(W/2,cy,Math.sin(T*1.6)*0.06,{cheer:Math.sin(T*1.2)>0.6?1:0});
   txt('Alex',W/2+92,cy-58,18,'#fff','center','#1d2b4f');txt('Zoe',W/2+86,cy-2,18,'#fff','center','#1d2b4f');txt('Dad',W/2+86,cy+52,18,'#fff','center','#1d2b4f');
   titleUI={ahoyed:titleUI.ahoyed,tilt:titleUI.tilt};
@@ -539,7 +551,7 @@ function drawTitleLand(){canoe.armA=0;canoe.armZ=0;const cy=Math.max(H*0.58,170+
   const rx=Math.min(400+XL/2,W+XL-120),gy=H*0.42;const pulse=1+Math.sin(T*5)*0.05;X.save();X.translate(rx,gy);X.scale(pulse,pulse);rrect(-100,-40,200,80,40);X.fillStyle='#35c46a';X.fill();X.lineWidth=6;X.strokeStyle='#fff';X.stroke();
   txt('GO! ▶',0,3,44,'#fff','center','#1b7a3c');X.restore();titleUI.go=[rx-110,gy-48,220,96];
   const dy=gy+78;rrect(rx-60,dy-22,120,44,22);X.fillStyle=hard?'#e53935':'#29b6f6';X.fill();X.strokeStyle='#fff';X.lineWidth=3;X.stroke();txt(hard?'HARD':'NORMAL',rx,dy+1,16,'#fff');titleUI.diff=[rx-64,dy-26,128,52];
-  txt('🏆 '+best+'   🏅 '+Object.keys(badges).length,rx,dy+50,20,'#fff','center','#1d2b4f');
+  txt('🏆 '+(TOGETHER?(+(KT.get('best',0)||0)):best)+'   🏅 '+Object.keys(badges).length,rx,dy+50,20,'#fff','center','#1d2b4f');
   if(typeof drawTogetherBtn==='function')drawTogetherBtn(rx,dy+104);
   const bb=H-SAFE_B;if(canTilt){titleUI.tilt=[-XL+8,bb-58,50,50];circ(-XL+33,bb-33,24,tiltOn?'#35c46a':'rgba(255,255,255,0.85)');txt('📱',-XL+33,bb-32,22,'#000');if(tiltOn)txt('↔',-XL+33,bb-62,16,'#fff','center','#1b7a3c')}
   titleUI.mute=[W+XL-58,bb-58,50,50];circ(W+XL-33,bb-33,24,'rgba(255,255,255,0.85)');txt(AUD.muted?'🔇':'🔊',W+XL-33,bb-32,24,'#000');
@@ -549,7 +561,7 @@ function drawEnd(){drawWorld();X.fillStyle='rgba(20,30,70,0.35)';X.fillRect(-XL,
   let y=py+40;txt('⛺ CAMP! ⛺',W/2,y,36,'#ff5ca8','center','#fff');y+=50;
   const st=stars();for(let i=0;i<3;i++){const on=i<st&&endT>0.6+i*0.35;const s=on?1+Math.max(0,0.3-(endT-0.6-i*0.35))*2:1;X.save();X.translate(W/2+(i-1)*70,y+(i===1?-8:6));X.scale(s,s);txt('★',0,0,64,on?'#ffd23f':'#ddd','center',on?'#e0a000':'#bbb');X.restore()}
   y+=64;const row=(icon,label,val)=>{rrect(px+20,y-22,pw-40,44,22);X.fillStyle='#e8f7ff';X.fill();txt(icon,px+48,y+1,26,'#000');txt(label,px+74,y+1,17,'#1d2b4f','left');txt(String(val),px+pw-40,y+1,26,'#1565c0','right');y+=52};
-  row('💦','Splashes',splashes);row('🪙','Treasure',treasure);row('⭐','Score',score);row('🤣',"Dad's Funniest Splashes",dadFalls);
+  row('💦',TOGETHER?'Alex 💦 '+splA+'  ·  Zoe 🎈 '+splZ:'Splashes',splashes);row('🪙','Treasure',treasure);row('⭐','Score',score);row('🤣',"Dad's Funniest Splashes",dadFalls);
   if(dadFalls>=2){X.save();X.translate(W/2,y+30);X.rotate(Math.sin(T*3)*0.05);txt('🏆',-118,0,44,'#000');txt('Grand Prize:',18,-12,20,'#e53935');txt('$10,000?!',18,14,26,'#e53935','center','#ffd23f');X.restore();y+=72}
   else{txt('📼 Dad is camera-ready!',W/2,y+10,17,'#7e57c2');y+=36}
   if(score>=best&&score>0){txt('NEW BEST! 🏆 '+best,W/2,y,20,'#43a047');}else txt('🏆 Best: '+best+(hard?' · HARD':''),W/2,y,18,'#1d2b4f');y+=28;txt('🏅 Badges '+Object.keys(badges).length,W/2,y,16,'#7e57c2');
@@ -565,10 +577,10 @@ function render(){X.setTransform(DPR*SC,0,0,DPR*SC,OX*DPR,0);X.clearRect(-XL,0,W
   X.save();if(shake>0)X.translate(rr(-1,1)*shake*16,rr(-1,1)*shake*16);
   drawWorld();objs.filter(o=>o.type==='o').forEach(drawObj);objs.filter(o=>o.type!=='o').forEach(drawObj);
   if(state==='dad')drawDadScene();else{const c=canoeGeom();if(canoe.inv>0&&Math.sin(T*30)>0)X.globalAlpha=0.6;drawFamily(c.x,c.y,c.a,{cheer:canoe.cheer});X.globalAlpha=1}
-  drawShots();X.restore();drawParts();if(!(state==='dad'&&dadSeq.t>4.2&&dadSeq.t<9.6)){const hk=XL>0?1.2:1,h0=H;X.save();X.translate(-XL,0);X.scale(hk,hk);const w0=W;W=(400+2*XL)/hk;H=h0/hk;try{drawHUD()}finally{W=w0;H=h0;X.restore()}for(const k of ['mute','sw'])if(ui[k])ui[k]=[ui[k][0]*hk-XL,ui[k][1]*hk,ui[k][2]*hk,ui[k][3]*hk]}drawBanner();if(card)drawCard()}
+  drawShots();X.restore();drawParts();if(!(state==='dad'&&dadSeq.t>4.2&&dadSeq.t<9.6)){const hk=XL>0?1.2:1,h0=H;X.save();X.translate(-XL,0);X.scale(hk,hk);const w0=W;W=(400+2*XL)/hk;H=h0/hk;try{drawHUD()}finally{W=w0;H=h0;X.restore()}for(const k of ['mute','sw','zb'])if(ui[k])ui[k]=[ui[k][0]*hk-XL,ui[k][1]*hk,ui[k][2]*hk,ui[k][3]*hk]}drawBanner();if(card)drawCard()}
 reset();AUD.setTheme('title');requestAnimationFrame(frame);
 if(DEBUG)window.__W={get state(){return state},get score(){return score},get splashes(){return splashes},get treasure(){return treasure},get hearts(){return hearts},get dadFalls(){return dadFalls},get canoe(){return canoe},get shooter(){return shooter},get dad(){return dadSeq&&dadSeq.t},
   audio:AUD,start:startGame,objs:()=>objs,clear(){objs=[]},spawn(k,x,yScreen){return spawnTarget(k,x,dist+(CY()-yScreen))},gold(k,x,yScreen){objs.push({type:'g',k,x,wy:dist+(CY()-yScreen),r:16,ph:0})},
   rock(x,yScreen,k){objs.push({type:'o',k:k||'rock',x,wy:dist+(CY()-yScreen),r:k==='big'?40:22,ph:0,ang:0,len:80})},fire,switchShooter,set runT(v){runT=v},get runT(){return runT},dadGo(){startDad({})},setDad(t){if(dadSeq)dadSeq.t=t},end(){score=Math.max(score,960);splashes=Math.max(splashes,41);treasure=Math.max(treasure,27);dadFalls=Math.max(dadFalls,2);finish()},
-  freeze(){speed=0},get distV(){return dist},set TS(v){TS=v},get seen(){return seen},get cards(){return cards},get bumps(){return bumps},get card(){return card},get tiltOn(){return tiltOn},get KID(){return KID},get hard(){return hard},get best(){return best},get stars(){return stars()},toggleTilt,toClient:(x,y)=>({x:x*SC+OX,y:y*SC}),CY,setScore(v){score=v}};
+  freeze(){speed=0},get distV(){return dist},set TS(v){TS=v},get seen(){return seen},get cards(){return cards},get bumps(){return bumps},get card(){return card},get tiltOn(){return tiltOn},get KID(){return KID},get together(){return TOGETHER},set together(v){TOGETHER=!!v},zoeThrow,get splZ(){return splZ},get splA(){return splA},get hard(){return hard},get best(){return best},get stars(){return stars()},toggleTilt,toClient:(x,y)=>({x:x*SC+OX,y:y*SC}),CY,setScore(v){score=v}};
 })();

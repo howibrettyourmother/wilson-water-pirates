@@ -15,3 +15,10 @@ Best score, Normal/Hard and badges are saved per kid (`wwp_alex_*`, `wwp_zoe_*`)
 
 ## iPad landscape (v1.5, Nov 2026)
 In landscape the river widens (up to 1.5×) to fill the screen, with a bit more to splash so it never feels empty. The title screen gets a landscape layout: hat pickers on the left, the canoe in the middle, and GO, Normal/Hard and best score on the right, so nothing overlaps. Shorter portrait screens use a compact layout that keeps the GO button clear of the hat rows.
+
+## Together mode (Nov 2026)
+Tap **👫 Together** on the title (or open `?mode=together`). Alex steers and squirts as usual;
+Zoe gets her own big pink 🎈 button in the bottom-right corner that auto-aims a water balloon
+at the nearest target (it pulses if she hasn't tapped for a while). The end screen shows each
+kid's splashes, and the team keeps its own best score (`wwp_team_best`), separate from each kid's.
+Uses the vendored shared kids lib (`src/kids.js`, from github.com/howibrettyourmother/kids-lib).

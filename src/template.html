@@ -116,4 +116,58 @@ b.addEventListener('touchstart',down,{passive:false});b.addEventListener('touche
 b.addEventListener('mousedown',down);b.addEventListener('mouseup',up);b.addEventListener('mouseleave',function(e){if(on)up(e)});
 ['pointerdown','pointerup','click'].forEach(function(n){b.addEventListener(n,stop)});
 function add(){document.body.appendChild(b);document.body.appendChild(hint);watchOffl()}if(document.body)add();else addEventListener('DOMContentLoaded',add)})();</script>
+
+<script src="../audio/pack.js?v=20261120el"></script>
+<script>
+(function(){
+  function musicGain(){
+    try{
+      if(window.AUD&&AUD.musicDuck) return AUD.musicDuck;
+      if(window.AUD&&AUD.duckGain) return AUD.duckGain;
+      if(window.musG) return musG;
+      if(window.musicDuck) return musicDuck;
+    }catch(e){}
+    return null;
+  }
+  function getCtx(){
+    try{
+      if(window.AUD&&AUD.ctx) return AUD.ctx;
+      if(window.AUD&&AUD.C) return AUD.C;
+      if(window.AC) return AC;
+      if(window.C) return C;
+    }catch(e){}
+    return null;
+  }
+  var kid='alex';
+  try{var q=new URLSearchParams(location.search); kid=q.get('kid')||q.get('mode')||'alex';}catch(e){}
+  if(kid!=='zoe') kid='alex';
+  if(window.KVX) KVX.init({base:'../audio/', getCtx:getCtx, musicGain:musicGain, kid:kid, v:'20261120el', preload:['sfx/ui_click','sfx/correct','sfx/win','sfx/pop','sfx/jump']});
+  function wrap(obj, name, sfx){
+    if(!obj||typeof obj[name]!=='function') return;
+    var orig=obj[name];
+    obj[name]=function(){ try{ if(window.KVX){ KVX.sfx(sfx); return; } }catch(e){} try{return orig.apply(this,arguments);}catch(e){} };
+  }
+  function hookSfx(){
+    var S=window.SFX||window.AUD&&AUD.SFX||(window.AUD&&AUD);
+    if(!S) return;
+    [['click','ui_click'],['tap','ui_tap'],['pop','pop'],['boing','boing'],['whoosh','whoosh'],
+     ['fanfare','win'],['win','win'],['jump','jump'],['chime','correct'],['collect','collect'],
+     ['star','star'],['splash','splash'],['sparkle','sparkle'],['thud','thud'],['beep','ui_click']].forEach(function(p){wrap(S,p[0],p[1]);});
+  }
+  hookSfx();
+  setTimeout(hookSfx,500);
+  // Prefer new praise clips when present
+  var _say=window.AUD&&AUD.say;
+  if(typeof _say==='function'){
+    AUD.say=function(k,p,q){
+      try{
+        if(window.KVX&&(k==='great'||k==='gj'||k==='yay'||k==='yes'||k==='awesome'||k==='legend')){KVX.praise();return true;}
+        if(window.KVX&&(k==='try'||k==='hint'||k==='oops')){KVX.praise('try');return true;}
+      }catch(e){}
+      return _say.apply(AUD,arguments);
+    };
+  }
+})();
+</script>
+
 </body></html>

@@ -540,12 +540,13 @@ function drawKid(x,y,who,o){o=o||{};const s=o.s||1;const girl=who==='zoe';const 
     X.save();X.translate(0,o.aim?-14:8);X.rotate(o.aim?0:0.0);rrect(-6,-16,12,26,5);X.fillStyle='#35c46a';X.fill();rrect(-3,-24,6,10,2);X.fillStyle='#ff8a1f';X.fill();circ(0,-2,7,'#5ec8ff');circ(-2,-4,2,'#fff');X.restore()}
   if(girl&&!cheer&&!o.noBalloon){const bob=Math.sin(T*4)*1.5;X.save();X.translate(0,o.aim?-14:8+bob);circ(0,0,9,'#ff5ca8');circ(-3,-3,2.5,'rgba(255,255,255,0.6)');X.beginPath();X.moveTo(-2,8);X.lineTo(2,8);X.lineTo(0,11);X.fillStyle='#ff5ca8';X.fill();X.restore()}
   // head
-  const hy=-16;
-  if(girl){// pigtails
-    circ(-15,hy+2,6,'#e8b04a');circ(15,hy+2,6,'#e8b04a');circ(-15,hy+2,2.5,'#ff5ca8');}
-  X.beginPath();X.arc(0,hy,r+1,Math.PI,0);X.fillStyle=girl?'#e8b04a':'#7a4a24';X.fill();
+  const hy=-16,hc=girl?'#7a4a28':'#3a2416';
+  if(girl){circ(-13,hy+6,5.5,hc);circ(13,hy+6,5.5,hc);circ(-15,hy+12,4.5,hc);circ(15,hy+12,4.5,hc);}
+  else{circ(-8,hy-8,3.5,hc);circ(6,hy-9,3.8,hc);circ(9,hy-5,3,hc);}
+  X.beginPath();X.arc(0,hy,r+1,Math.PI,0);X.fillStyle=hc;X.fill();
   face(0,hy,r,{happy:cheer||o.happy,open:cheer,oops:o.oops&&!cheer,seed:girl?3:7});
-  X.beginPath();X.arc(0,hy-2,r,Math.PI*1.1,Math.PI*1.9);X.strokeStyle=girl?'#e8b04a':'#7a4a24';X.lineWidth=5;X.stroke();
+  X.beginPath();X.arc(0,hy-2,r,Math.PI*1.1,Math.PI*1.9);X.strokeStyle=hc;X.lineWidth=5;X.stroke();
+  if(girl){X.save();X.translate(-6,hy-r+1);X.fillStyle='#ff5c9e';X.beginPath();X.moveTo(0,0);X.lineTo(-7,-5);X.lineTo(-7,5);X.closePath();X.fill();X.beginPath();X.moveTo(0,0);X.lineTo(7,-5);X.lineTo(7,5);X.closePath();X.fill();circ(0,0,2,'#fff');X.restore();}
   drawHat(0,hy-r+4,girl?0.85:0.92,hat);X.restore()}
 function drawDad(x,y,o){o=o||{};const s=o.s||1;X.save();X.translate(x,y);X.rotate(o.rot||0);X.scale(s,s);
   rrect(-17,-4,34,30,11);X.fillStyle='#2f6fd6';X.fill();X.fillStyle='#ffd23f';X.fillRect(-17,6,34,4);

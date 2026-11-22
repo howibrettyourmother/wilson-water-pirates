@@ -58,7 +58,7 @@ const AUD=(()=>{
     const bus=v=>{const g=C.createGain();g.gain.value=v;g.connect(master);return g};
     musicBus=bus(0.38);musicDuck=C.createGain();musicDuck.connect(musicBus);sfxBus=bus(0.7);voiceBus=bus(1.15);
     const sr=C.sampleRate;noiseBuf=C.createBuffer(1,sr*2,sr);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=R()*2-1;
-    setInterval(schedule,25);}
+    /* synth disabled */0;}
   function unlock(){try{if(!C)build();if(!C)return;try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
       if(C.state!=='running')C.resume().catch(()=>{});
       const s=C.createBufferSource();s.buffer=C.createBuffer(1,1,22050);s.connect(C.destination);s.start(0);
@@ -137,7 +137,7 @@ const AUD=(()=>{
   function shaker(t,v){const G=g(0,musicDuck);env(G,t,0.005,0.01,0.05,v);n(t,0.07,f('highpass',6000,0.7,G))}
   function wood(t,v){const G=g(0,musicDuck);env(G,t,0.001,0.005,0.06,v);o('sine',1200,t,0.08,G)}
   function boom(t,v){const G=g(0,musicDuck);env(G,t,0.003,0.03,0.2,v);const x=o('sine',110,t,0.25,G);x.frequency.exponentialRampToValueAtTime(50,t+0.2)}
-  function schedule(){if(window.BGM&&BGM.ready)return;if(!C||theme==='off')return;if(nextT<now())nextT=now()+0.05;
+  function schedule(){return;if(!C||theme==='off')return;if(nextT<now())nextT=now()+0.05;
     while(nextT<now()+0.15){const t=nextT,i=step%96,bar=(i/6)|0,e=i%6,ch=PROG[bar],soft=theme==='sunset'||theme==='end'?0.6:1;
       if(e===0||e===3){CH[ch].forEach((m,j)=>uke(m,t+j*0.012,0.05*soft))}else if(e===2||e===5){CH[ch].slice(1).forEach((m,j)=>uke(m,t+j*0.008,0.025*soft))}
       if(e===0)bass(BASS[ch],t,0.2*soft);if(e===3)bass(BASS[ch]+7,t,0.14*soft);
@@ -829,7 +829,7 @@ if(DEBUG)window.__W={get state(){return state},get score(){return score},get spl
 
 </script><script>/*offline-sw*/(function(){if(!('serviceWorker' in navigator))return;function badge(){try{if(document.getElementById('offl'))return;var d=document.createElement('div');d.id='offl';d.textContent='\u2713 Ready offline';d.style.cssText='position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 6px);transform:translateX(-50%);background:rgba(46,125,50,.92);color:#fff;font:700 15px -apple-system,system-ui,sans-serif;padding:7px 14px;border-radius:18px;z-index:10000;pointer-events:none;transition:opacity .8s;box-shadow:0 2px 8px rgba(0,0,0,.25)';document.body.appendChild(d);setTimeout(function(){d.style.opacity='0'},4000);setTimeout(function(){d.remove()},5000)}catch(e){}}
 function check(){caches.match('index.html',{ignoreSearch:true}).then(function(r){if(r)badge()}).catch(function(){})}
-addEventListener('load',function(){navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready}).then(function(){if(navigator.serviceWorker.controller)check();else navigator.serviceWorker.addEventListener('controllerchange',check);navigator.serviceWorker.addEventListener('message',function(e){if(e.data==='offline-ready')check()})}).catch(function(){})})})();</script><script>/*bgm*/window.BGM_CFG={"id":"wilson-water-pirates","base":"music/","v":"20261115intro","intro":"intro","tracks":{"title":[48.0, 1.0],"play":[48.0, 1.0],"sunset":[48.0, 1.0]},"map":{"end":"title","off":""},"pos":"left:10px;top:58px","poll":function(){var a=window.AUD||(typeof AUD!=='undefined'?AUD:null);if(!a)return{};return{area:a.theme,speaking:a.speaking,muted:a.muted}}};</script><script src="music/bgm.js?v=20261115intro" defer></script>
+addEventListener('load',function(){navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready}).then(function(){if(navigator.serviceWorker.controller)check();else navigator.serviceWorker.addEventListener('controllerchange',check);navigator.serviceWorker.addEventListener('message',function(e){if(e.data==='offline-ready')check()})}).catch(function(){})})})();</script><script>/*bgm*/window.BGM_CFG={"id":"wilson-water-pirates","base":"music/","v":"20261122bgm","intro":"intro","tracks":{"title":[68.571429, 1],"play":[96, 1],"sunset":[114.285714, 1]},"map":{"end":"title","off":""},"pos":"left:10px;top:58px","poll":function(){var a=window.AUD||(typeof AUD!=='undefined'?AUD:null);if(!a)return{};return{area:a.theme,speaking:a.speaking,muted:a.muted}}};</script><script src="music/bgm.js?v=20261122bgm" defer></script>
 <script>/*sw-reload*/(function(){if(!('serviceWorker' in navigator))return;var sw=navigator.serviceWorker,had=!!sw.controller,done=false;
 sw.addEventListener('controllerchange',function(){if(!had){had=true;return}if(done)return;done=true;try{if(sessionStorage.swReloaded&&Date.now()-sessionStorage.swReloaded<10000)return;sessionStorage.swReloaded=Date.now()}catch(e){}location.reload()});
 function up(){if(sw.getRegistration)sw.getRegistration().then(function(g){if(g)g.update()}).catch(function(){})}

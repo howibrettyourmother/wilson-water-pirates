@@ -23,6 +23,7 @@ function unlock(){
   // iOS: play a silent buffer inside the gesture
   try{var b=ctx.createBuffer(1,1,22050),s=ctx.createBufferSource();s.buffer=b;s.connect(ctx.destination);s.start(0)}catch(e){}
   apply();
+  try{tick()}catch(e){}
 }
 function load(name,cb){
   if(cache[name]){touch(name);cb(cache[name]);return}

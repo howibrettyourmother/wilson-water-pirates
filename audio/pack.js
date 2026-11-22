@@ -1,4 +1,4 @@
-/* kids-audio pack player v20261120
+/* kids-audio pack player v20261120el2
    Pre-generated ElevenLabs voice + shared SFX.
    KVX.init({base:'audio/', getCtx, musicGain, kid:'alex'|'zoe'})
    KVX.say(key) / KVX.sayAny(keys) / KVX.count(n) / KVX.sfx(name)
@@ -96,19 +96,20 @@
     });
   };
 
-  function voiceRel(key){
-    const kid=cfg.kid||'alex';
-    // voice/{kid}/{key}.mp3, fallback other kid, then shared keys already under kid
+  function voiceRel(key, voice){
+    if(key.indexOf('/')>=0) return (key.indexOf('voice/')===0?key:'voice/'+key);
+    const kid=voice||cfg.kid||'alex';
     return 'voice/'+kid+'/'+key;
   }
   KVX.say=function(key, opts){
     opts=opts||{};
     const t=performance.now();
-    if(!opts.force && last[key] && t-last[key]<1500) return;
-    last[key]=t;
-    const rel=voiceRel(key);
+    const deb=opts.voice? (opts.voice+'/'+key):key;
+    if(!opts.force && last[deb] && t-last[deb]<1500) return;
+    last[deb]=t;
+    const rel=voiceRel(key, opts.voice);
     load(rel).then(b=>{
-      if(!b){ /* try other layout */ load('voice/'+key).then(b2=>startVoice(key,b2,opts)); return; }
+      if(!b && !opts.voice){ load('voice/'+key).then(b2=>startVoice(key,b2,opts)); return; }
       startVoice(key,b,opts);
     });
   };

@@ -6,11 +6,11 @@ alex|Nice shot, Alex!|ryan
 yay|Yay! Hooray!|amy
 treasure|Ooh, treasure!|amy
 camp|We made it to camp!|ryan
-z1|Great job, Zoe!|amy
+z1|Great job, Zoe!|edge-ana
 z2|Way to go, Zoe!|amy
 z3|Super splash, Zoe!|amy
 z4|Zoe, you're amazing!|amy
-a1|Great job, Alex!|ryan
+a1|Great job, Alex!|edge-ana
 a2|Awesome shot, Alex!|ryan
 a3|Alex, you're a super pirate!|ryan
 a4|Nice one, Alex!|ryan

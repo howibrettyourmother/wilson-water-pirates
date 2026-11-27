@@ -119,7 +119,7 @@ function hitTarget(o,who){o.hit++;o.ht=0;splashes++;if(who==='zoe')splZ++;else s
   canoe.cheer=1.2;
   // Zoe mode: the count pops on screen; the voice only cheers milestones (10, 20, ...), never more than one number every 4 s
   if(AUTOZ){zCount++;floatText(''+zCount,o.x,oy-70,'#ff8fc8')}
-  if(AUTOZ&&zCount%10===0&&runT-lastNumT>4&&AUD.num(zCount)){lastNumT=runT;lastPraise=runT}
+  /* score numbers are no longer spoken (no learning content, no robotic number clips) */
   else if(runT-lastPraise>(o.k==='raft'||o.k==='bear'||o.k==='beaver'?1.2:2.6)){const pool=who==='zoe'?['z1','z2','z3','z4','z5','z6','z7','zoe','yay']:['a1','a2','a3','a4','a5','a6','a7','alex','splash'];
     let k=pick(pool);if(o.k==='raft')k=pick(['t1','t4','t5']);if(o.k==='bear'&&R()<0.6)k='bear';if(o.k==='duck'&&R()<0.3)k='duck';if(AUD.say(k,1))lastPraise=runT}
   S.giggle(who==='zoe')}

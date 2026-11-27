@@ -141,7 +141,7 @@ function add(){document.body.appendChild(b);document.body.appendChild(hint);watc
   var kid='alex';
   try{var q=new URLSearchParams(location.search); kid=q.get('kid')||q.get('mode')||'alex';}catch(e){}
   if(kid!=='zoe') kid='alex';
-  if(window.KVX) KVX.init({base:'../audio/', getCtx:getCtx, musicGain:musicGain, kid:kid, v:'20261120el3', preload:['sfx/ui_click','sfx/correct','sfx/win','sfx/pop','sfx/jump']});
+  if(window.KVX) KVX.init({base:'audio/', getCtx:getCtx, musicGain:musicGain, kid:kid, v:'20261120el3', preload:['sfx/ui_click','sfx/correct','sfx/win','sfx/pop','sfx/jump']});
   function wrap(obj, name, sfx){
     if(!obj||typeof obj[name]!=='function') return;
     var orig=obj[name];

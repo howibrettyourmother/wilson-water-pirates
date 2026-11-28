@@ -23,7 +23,7 @@
     voiceBus=C.createGain(); voiceBus.gain.value=1;
     sfxBus=C.createGain(); sfxBus.gain.value=0.75;
     const master=C.createGain(); master.gain.value=0.95;
-    voiceBus.connect(master); sfxBus.connect(master); master.connect(dest);
+    voiceBus.connect(master); sfxBus.connect(master); /*kfx-limit*/try{const lim=C.createDynamicsCompressor();lim.threshold.value=-2;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=0.002;lim.release.value=0.12;master.connect(lim);lim.connect(dest)}catch(e){master.connect(dest)}
     if(cfg.musicGain){ musicG=typeof cfg.musicGain==='function'?null:cfg.musicGain; }
     C.addEventListener&&C.addEventListener('statechange',()=>{ if(C.state!=='running'&&!document.hidden) wake(); });
   }
@@ -90,7 +90,7 @@
     if(sx.playing[key]){ try{sx.playing[key].stop();}catch(e){} delete sx.playing[key]; sx.n--; }
     load(rel).then(b=>{
       if(!b) return;
-      const s=playBuf(b, sfxBus, false); if(!s) return;
+      const s=playBuf(b, sfxBus, false); if(!s) return; try{s.playbackRate.value=1+(Math.random()*2-1)*(/correct|star|sparkle|levelup|win|collect/.test(key)?0.02:0.05)}catch(e){}
       sx.playing[key]=s; sx.n++;
       s.onended=()=>{ if(sx.playing[key]===s){ delete sx.playing[key]; sx.n--; } };
     });

@@ -80,42 +80,7 @@ document.addEventListener('visibilitychange',function(){try{document.visibilityS
 addEventListener('pagehide',function(){try{hide()}catch(x){}});addEventListener('pageshow',function(){try{if(document.visibilityState!=='hidden')show()}catch(x){}});
 addEventListener('online',function(){try{flush()}catch(x){}});if(Object.keys(rd()).length)flush();
 }catch(x){}},0);</script>
-<script>/*hub-home*/(function(){var own='alex',k;try{k=localStorage.kidsHub}catch(e){}if(k!=='zoe'&&k!=='alex')k=own;
-var u=k==='zoe'?'/doodle-and-zoe/':'/alex-games/',SZ=68,R=27,C=2*Math.PI*R,b=document.createElement('div');b.id='hubHome';b.setAttribute('role','button');b.setAttribute('aria-label',k==='zoe'?'Go home':'Hold to go home');
-b.innerHTML='<svg width="'+SZ+'" height="'+SZ+'" viewBox="0 0 '+SZ+' '+SZ+'" style="position:absolute;left:0;top:0;pointer-events:none"><circle cx="'+SZ/2+'" cy="'+SZ/2+'" r="'+R+'" fill="none" stroke="#ffd54a" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+C+'" transform="rotate(-90 '+SZ/2+' '+SZ/2+')"/></svg><span style="position:relative;pointer-events:none">🏠</span>';
-b.style.cssText='position:fixed;z-index:2147483646;width:'+SZ+'px;height:'+SZ+'px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;line-height:1;background:#fff;opacity:1;box-shadow:0 2px 8px rgba(0,0,0,.28),0 0 0 3px #ffd54a;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer;left:calc(10px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top))';
-var ring=b.querySelector('circle'),hint=document.createElement('div');
-hint.textContent='Hold to go home';hint.style.cssText='position:fixed;z-index:2147483646;padding:8px 12px;border-radius:14px;background:rgba(0,0,0,.72);color:#fff;font:bold 16px/1.2 sans-serif;white-space:nowrap;pointer-events:none;opacity:0;-webkit-transition:opacity .2s;transition:opacity .2s';
-var t0=0,raf=0,on=false,done=false,ht=0,HOLD=1000;
-function set(p){ring.setAttribute('stroke-dashoffset',String(C*(1-p)))}
-function clearOffl(){var o=document.getElementById('offl');if(!o)return;o.style.zIndex='10000';
- var hb=b.getBoundingClientRect(),ob=o.getBoundingClientRect();
- if(!(hb.right<ob.left-2||ob.right<hb.left-2||hb.bottom<ob.top-2||ob.bottom<hb.top-2)){o.style.left='50%';o.style.top=(hb.bottom+10)+'px';o.style.transform='translateX(-50%)'}}
-function watchOffl(){clearOffl();var n=0,iv=setInterval(function(){clearOffl();if(++n>24)clearInterval(iv)},400)}
-function showHint(){var r=b.getBoundingClientRect();hint.style.top=(r.bottom+6)+'px';hint.style.left=Math.max(4,r.left)+'px';hint.style.opacity='1';clearTimeout(ht);ht=setTimeout(function(){hint.style.opacity='0'},1600)}
-function leave(){done=true;try{window.dispatchEvent(new Event('hubsave'))}catch(x){}try{if(typeof window.hubSave==='function')window.hubSave()}catch(x){}
- setTimeout(function(){if(self!==top){try{parent.postMessage('hubClose',location.origin)}catch(x){}setTimeout(function(){try{location.href=u}catch(x){}},700);return}location.href=u},150)}
-function tick(){if(!on)return;var p=(Date.now()-t0)/HOLD;if(p>=1){set(1);on=false;leave();return}set(p);raf=requestAnimationFrame(tick)}
-var pop=null,popT=0,popTO=0,blockTill=0,armed=false,lastTE=0;
-function inBtn(e){var c=pop&&pop.firstChild;if(!c)return false;var x=e.changedTouches?e.changedTouches[0]:e,r=c.getBoundingClientRect();return x.clientX>=r.left&&x.clientX<=r.right&&x.clientY>=r.top&&x.clientY<=r.bottom}
-function closePop(){if(!pop)return;clearTimeout(popTO);try{pop.remove()}catch(x){}pop=null;blockTill=Date.now()+450;armed=false}
-function openPop(){if(pop||done)return;if(!document.getElementById('hubPopCss')){var st=document.createElement('style');st.id='hubPopCss';st.textContent='@keyframes hubPopIn{0%{transform:scale(.2)}60%{transform:scale(1.12)}80%{transform:scale(.95)}100%{transform:scale(1)}}@keyframes hubPopB{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.04)}}';document.head.appendChild(st)}
- pop=document.createElement('div');pop.id='hubPop';pop.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(20,0,40,.5);display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none';
- pop.innerHTML='<div style="width:180px;height:180px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff7b0,#ffd54a 45%,#ff9ccf);border:8px solid #fff;box-shadow:0 0 0 6px #ff6fb5,0 10px 30px rgba(0,0,0,.35),0 0 40px #fff6;display:flex;align-items:center;justify-content:center;font-size:96px;line-height:1;animation:hubPopIn .45s ease-out,hubPopB 1.1s ease-in-out .45s infinite;pointer-events:none">🏠</div>';
- document.body.appendChild(pop);popT=Date.now();armed=false;popTO=setTimeout(closePop,4000)}
-function block(e){var now=Date.now();if(!pop){if(now<blockTill&&e.target!==b){e.preventDefault&&e.cancelable&&e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()}return}
- if(e.cancelable)e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();var ty=e.type;
- if(ty==='touchstart'||ty==='mousedown'||ty==='pointerdown'){if(ty==='mousedown'&&now-lastTE<800)return;if(ty!=='pointerdown')armed=true;return}
- if(ty==='touchend'||ty==='mouseup'){if(ty==='touchend')lastTE=now;else if(now-lastTE<800)return;if(!armed)return;armed=false;
-  if(inBtn(e)){if(now-popT<350)return;clearTimeout(popTO);leave();return}closePop()}}
-['touchstart','touchmove','touchend','touchcancel','mousedown','mousemove','mouseup','click','pointerdown','pointermove','pointerup','keydown','keyup','wheel','contextmenu'].forEach(function(n){addEventListener(n,block,{capture:true,passive:false})});
-function down(e){e.preventDefault();e.stopPropagation();if(k==='zoe'){openPop();return}if(on||done)return;on=true;t0=Date.now();hint.style.opacity='0';raf=requestAnimationFrame(tick)}
-function up(e){e.preventDefault();e.stopPropagation();if(k==='zoe')return;if(!on)return;on=false;cancelAnimationFrame(raf);set(0);if(Date.now()-t0<HOLD)showHint()}
-function stop(e){e.stopPropagation()}
-b.addEventListener('touchstart',down,{passive:false});b.addEventListener('touchend',up,{passive:false});b.addEventListener('touchcancel',up,{passive:false});
-b.addEventListener('mousedown',down);b.addEventListener('mouseup',up);b.addEventListener('mouseleave',function(e){if(on)up(e)});
-['pointerdown','pointerup','click'].forEach(function(n){b.addEventListener(n,stop)});
-function add(){document.body.appendChild(b);document.body.appendChild(hint);watchOffl()}if(document.body)add();else addEventListener('DOMContentLoaded',add)})();</script>
+<!--hub-home replaced by in-game Back button (game.js)-->
 
 <script src="audio/pack.js?v=20261120el3"></script>
 <script>

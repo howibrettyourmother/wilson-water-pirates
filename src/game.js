@@ -423,18 +423,18 @@ function drawParts(){for(const p of parts){const k=1-p.t/p.life;if(p.ring){const
 // ---------- HUD ----------
 function lifeJacket(x,y,on){X.save();X.translate(x,y);X.globalAlpha=on?1:0.3;rrect(-12,-13,24,26,8);X.fillStyle='#ff8a1f';X.fill();X.fillStyle='#ffd23f';X.fillRect(-12,-2,24,4);X.fillStyle='#c25a00';X.fillRect(-1.5,-13,3,26);X.restore()}
 function drawHUD(){const top=Math.max(8,SAFE_T+4);
-  rrect(8,top,W-16,48,24);X.fillStyle='rgba(255,255,255,0.82)';X.fill();
-  for(let i=0;i<3;i++)lifeJacket(32+i*30,top+24,i<hearts);
+  const L=Math.max(8,backR());rrect(L,top,W-8-L,48,24);X.fillStyle='rgba(255,255,255,0.82)';X.fill();
+  for(let i=0;i<3;i++)lifeJacket(L+24+i*30,top+24,i<hearts);
   // splash score
-  X.save();X.translate(140,top+24);X.beginPath();X.moveTo(0,-14);X.quadraticCurveTo(11,-2,9,5);X.arc(0,5,9,0,Math.PI);X.quadraticCurveTo(-11,-2,0,-14);X.fillStyle='#29b6f6';X.fill();X.restore();
-  txt(String(score),156,top+25,24,'#1d2b4f','left');
+  X.save();X.translate(L+132,top+24);X.beginPath();X.moveTo(0,-14);X.quadraticCurveTo(11,-2,9,5);X.arc(0,5,9,0,Math.PI);X.quadraticCurveTo(-11,-2,0,-14);X.fillStyle='#29b6f6';X.fill();X.restore();
+  txt(String(score),L+148,top+25,24,'#1d2b4f','left');
   // treasure
-  ell(236,top+24,11,11,'#f5b700');ell(236,top+24,7,7,'#ffd23f');txt(String(treasure),252,top+25,22,'#1d2b4f','left');
+  ell(L+228,top+24,11,11,'#f5b700');ell(L+228,top+24,7,7,'#ffd23f');txt(String(treasure),L+244,top+25,22,'#1d2b4f','left');
   // mute
   ui.mute=[W-56,top,48,48];txt(AUD.muted?'🔇':'🔊',W-32,top+25,24,'#000');
   // progress river map
-  const py=top+58;rrect(40,py,W-80,12,6);X.fillStyle='rgba(255,255,255,0.6)';X.fill();const p=clamp(runT/RUN,0,1);rrect(40,py,(W-80)*p+6,12,6);X.fillStyle='#29b6f6';X.fill();
-  SECTIONS.forEach(S=>{circ(40+(W-80)*S.at,py+6,4,'#fff')});txt('⛺',W-30,py+5,20,'#000');ell(40+(W-80)*p,py+6,8,5,'#d9472b');
+  const PL=Math.max(40,L+12),PW=W-40-PL,py=top+58;rrect(PL,py,PW,12,6);X.fillStyle='rgba(255,255,255,0.6)';X.fill();const p=clamp(runT/RUN,0,1);rrect(PL,py,PW*p+6,12,6);X.fillStyle='#29b6f6';X.fill();
+  SECTIONS.forEach(S=>{circ(PL+PW*S.at,py+6,4,'#fff')});txt('⛺',W-30,py+5,20,'#000');ell(PL+PW*p,py+6,8,5,'#d9472b');
   // shooter switch button
   if(TOGETHER){ui.sw=null;const zw=124,zh=128,bx=W-zw-14,by=H-zh-12-SAFE_B,pu=zIdle>7?1+Math.sin(T*8)*0.06:1;ui.zb=[bx,by,zw,zh];X.save();X.translate(bx+zw/2,by+zh/2);X.scale(pu,pu);X.translate(-(bx+zw/2),-(by+zh/2));
     rrect(bx,by,zw,zh,30);X.fillStyle=zCool>0?'rgba(255,140,200,0.85)':'rgba(255,92,168,0.95)';X.fill();X.strokeStyle='#fff';X.lineWidth=5;X.stroke();drawKid(bx+zw/2,by+zh/2+12,'zoe',{s:1.7,happy:true,noBalloon:true});
@@ -573,7 +573,8 @@ function drawEnd(){drawWorld();X.fillStyle='rgba(20,30,70,0.35)';X.fillRect(-XL,
   X.restore();drawParts()}
 // ---------------- loop ----------------
 let last=performance.now();
-function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;try{for(let i=0;i<TS;i++)update(dt);render()}catch(e){console.error(e)}requestAnimationFrame(frame)}
+let PAUSED=false;
+function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;try{if(!PAUSED)for(let i=0;i<TS;i++)update(dt);render()}catch(e){console.error(e)}requestAnimationFrame(frame)}
 function render(){X.setTransform(DPR*SC,0,0,DPR*SC,OX*DPR,0);X.clearRect(-XL,0,W+2*XL,H);
   if(state==='title'){T+=0;drawTitle();return}
   if(state==='end'){drawEnd();return}
@@ -581,9 +582,42 @@ function render(){X.setTransform(DPR*SC,0,0,DPR*SC,OX*DPR,0);X.clearRect(-XL,0,W
   drawWorld();objs.filter(o=>o.type==='o').forEach(drawObj);objs.filter(o=>o.type!=='o').forEach(drawObj);
   if(state==='dad')drawDadScene();else{const c=canoeGeom();if(canoe.inv>0&&Math.sin(T*30)>0)X.globalAlpha=0.6;drawFamily(c.x,c.y,c.a,{cheer:canoe.cheer});X.globalAlpha=1}
   drawShots();X.restore();drawParts();if(!(state==='dad'&&dadSeq.t>4.2&&dadSeq.t<9.6)){const hk=XL>0?1.2:1,h0=H;X.save();X.translate(-XL,0);X.scale(hk,hk);const w0=W;W=(400+2*XL)/hk;H=h0/hk;try{drawHUD()}finally{W=w0;H=h0;X.restore()}for(const k of ['mute','sw','zb'])if(ui[k])ui[k]=[ui[k][0]*hk-XL,ui[k][1]*hk,ui[k][2]*hk,ui[k][3]*hk]}drawBanner();if(card)drawCard()}
+
+// ---------------- Back button (always visible, top-left; returns to the hub the kid came from) ----------------
+function hubUrl(){let k=null;try{k=new URLSearchParams(location.search).get('kid')}catch(e){}if(k!=='alex'&&k!=='zoe'){try{k=localStorage.kidsHub}catch(e){}}if(k!=='alex'&&k!=='zoe')k=KID;return k==='zoe'?'/doodle-and-zoe/':'/alex-games/'}
+let backEl=null,backOv=null;
+function backR(){if(!backEl)return 0;const r=backEl.getBoundingClientRect();if(!r.width)return 0;const hk=XL>0?1.2:1;return (((r.right+8)-OX)/SC+XL)/hk}
+function leaveGame(){try{window.dispatchEvent(new Event('hubsave'))}catch(e){}try{if(typeof window.hubSave==='function')window.hubSave()}catch(e){}
+  const u=hubUrl();setTimeout(()=>{if(self!==top){try{parent.postMessage('hubClose',location.origin)}catch(e){}setTimeout(()=>{try{location.href=u}catch(e){}},700);return}location.href=u},150)}
+function closeBackOv(){if(backOv){backOv.remove();backOv=null}PAUSED=false}
+function openBackOv(){if(backOv)return;PAUSED=true;try{AUD.SFX.pop()}catch(e){}
+  backOv=document.createElement('div');backOv.id='wwpLeave';
+  backOv.innerHTML='<div class="wl-card"><div class="wl-t">Leave the river?</div><button class="wl-b wl-stay" type="button">▶ Keep paddling</button><button class="wl-b wl-go" type="button">🏠 Go home</button></div>';
+  document.body.appendChild(backOv);
+  const stay=backOv.querySelector('.wl-stay'),go=backOv.querySelector('.wl-go');
+  const born0=Date.now();const on=(el,fn)=>{let t0=born0+300;const f=e=>{e.stopPropagation();const n=Date.now();if(n-t0<400)return;t0=n;fn()};el.addEventListener('pointerdown',e=>{e.stopPropagation()});el.addEventListener('pointerup',e=>{if(e.pointerType!=='mouse')f(e)});el.addEventListener('click',f)};
+  on(stay,closeBackOv);on(go,()=>{closeBackOv();leaveGame()});
+  backOv.addEventListener('pointerdown',e=>{e.stopPropagation()});const born=Date.now();backOv.addEventListener('click',e=>{if(e.target===backOv&&Date.now()-born>600)closeBackOv()})}
+function backPressed(){if(state==='title'||state==='end'){try{AUD.SFX.pop()}catch(e){}leaveGame()}else openBackOv()}
+(function(){const st=document.createElement('style');st.textContent=`
+#wwpBack{position:fixed;z-index:2147483000;left:calc(10px + env(safe-area-inset-left,0px));top:calc(10px + env(safe-area-inset-top,0px));height:60px;min-width:60px;padding:0 20px 0 14px;border-radius:30px;background:#fff;box-shadow:0 3px 10px rgba(0,0,0,.3),0 0 0 4px #ffd54a;display:flex;align-items:center;gap:8px;font:900 26px/1 "Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;color:#1d2b4f;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;box-sizing:border-box}
+#wwpBack:active{transform:scale(.94)}#wwpBack .ar{font-size:28px;color:#ef6c00}#wwpBack .hm{font-size:30px}
+#wwpBack.compact{padding:0;justify-content:center;width:60px;gap:0}#wwpBack.compact .tx,#wwpBack.compact .hm{display:none}
+#wwpLeave{position:fixed;inset:0;z-index:2147483600;background:rgba(10,30,60,.55);display:flex;align-items:center;justify-content:center;touch-action:none}
+#wwpLeave .wl-card{background:#fff;border-radius:34px;padding:26px 30px 30px;box-shadow:0 10px 40px rgba(0,0,0,.4),0 0 0 6px #ffd54a;display:flex;flex-direction:column;gap:16px;align-items:stretch;min-width:300px;font-family:"Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;animation:wlIn .25s ease-out}
+#wwpLeave .wl-t{font:900 32px/1.1 "Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;color:#1d2b4f;text-align:center}
+#wwpLeave .wl-b{font:900 30px/1 "Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;border:0;border-radius:40px;height:84px;color:#fff;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 5px 0 rgba(0,0,0,.2)}
+#wwpLeave .wl-stay{background:#35c46a}#wwpLeave .wl-go{background:#29b6f6}#wwpLeave .wl-b:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.2)}
+@keyframes wlIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}`;document.head.appendChild(st);
+  backEl=document.createElement('div');backEl.id='wwpBack';backEl.setAttribute('role','button');backEl.setAttribute('aria-label','Back to home');
+  backEl.innerHTML='<span class="ar">◀</span><span class="hm">🏠</span><span class="tx">Back</span>';
+  const fit=()=>backEl.classList.toggle('compact',innerWidth<560);fit();addEventListener('resize',fit);
+  let bt=0;const fire2=e=>{e.stopPropagation();const n=Date.now();if(n-bt<400)return;bt=n;backPressed()};
+  backEl.addEventListener('pointerdown',e=>{e.stopPropagation()});backEl.addEventListener('pointerup',e=>{if(e.pointerType==='mouse')return;fire2(e)});backEl.addEventListener('click',fire2);
+  document.body.appendChild(backEl)})();
 reset();AUD.setTheme('title');requestAnimationFrame(frame);
 if(DEBUG)window.__W={get state(){return state},get score(){return score},get splashes(){return splashes},get treasure(){return treasure},get hearts(){return hearts},get dadFalls(){return dadFalls},get canoe(){return canoe},get shooter(){return shooter},get dad(){return dadSeq&&dadSeq.t},
   audio:AUD,start:startGame,objs:()=>objs,clear(){objs=[]},spawn(k,x,yScreen){return spawnTarget(k,x,dist+(CY()-yScreen))},gold(k,x,yScreen){objs.push({type:'g',k,x,wy:dist+(CY()-yScreen),r:16,ph:0})},
   rock(x,yScreen,k){objs.push({type:'o',k:k||'rock',x,wy:dist+(CY()-yScreen),r:k==='big'?40:22,ph:0,ang:0,len:80})},fire,switchShooter,set runT(v){runT=v},get runT(){return runT},dadGo(){startDad({})},setDad(t){if(dadSeq)dadSeq.t=t},end(){score=Math.max(score,960);splashes=Math.max(splashes,41);treasure=Math.max(treasure,27);dadFalls=Math.max(dadFalls,2);finish()},
-  freeze(){speed=0},get distV(){return dist},set TS(v){TS=v},get seen(){return seen},get cards(){return cards},get bumps(){return bumps},get card(){return card},get tiltOn(){return tiltOn},get KID(){return KID},get together(){return TOGETHER},set together(v){TOGETHER=!!v},zoeThrow,get splZ(){return splZ},get splA(){return splA},get hard(){return hard},get best(){return best},get stars(){return stars()},toggleTilt,toClient:(x,y)=>({x:x*SC+OX,y:y*SC}),CY,setScore(v){score=v}};
+  freeze(){speed=0},get paused(){return PAUSED},backPressed,hubUrl,get distV(){return dist},set TS(v){TS=v},get seen(){return seen},get cards(){return cards},get bumps(){return bumps},get card(){return card},get tiltOn(){return tiltOn},get KID(){return KID},get together(){return TOGETHER},set together(v){TOGETHER=!!v},zoeThrow,get splZ(){return splZ},get splA(){return splA},get hard(){return hard},get best(){return best},get stars(){return stars()},toggleTilt,toClient:(x,y)=>({x:x*SC+OX,y:y*SC}),CY,setScore(v){score=v}};
 })();

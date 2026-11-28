@@ -5,7 +5,8 @@
 var W=window,D=document;
 var BGM={on:true,ready:false};W.BGM=BGM;W.BGM_ON=true;
 var cfg,ctx=null,master,duck,cur=null,curName='',cache={},order=[],loading={},want='',unlocked=false,btn,hidden=false,muted=false,spk=false,lastArea=null;
-var LS='bgm_';
+var LS='bgm_';var lim,sduck;/*kfx-bgm2*/
+function TG(n){var d=cfg&&cfg.gain&&cfg.gain[n];return d==null?1:Math.pow(10,d/20)}
 function now(){return ctx?ctx.currentTime:0}
 function lsGet(){try{return localStorage.getItem(LS+cfg.id)}catch(e){return null}}
 function lsSet(v){try{localStorage.setItem(LS+cfg.id,v)}catch(e){}}
@@ -14,7 +15,9 @@ function mkCtx(){
   var AC=W.AudioContext||W.webkitAudioContext;if(!AC)return;
   try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
   ctx=new AC();master=ctx.createGain();duck=ctx.createGain();
-  master.gain.value=0;duck.gain.value=1;duck.connect(master);master.connect(ctx.destination);
+  master.gain.value=0;duck.gain.value=1;sduck=ctx.createGain();sduck.gain.value=1;duck.connect(sduck);sduck.connect(master);
+  lim=ctx.createDynamicsCompressor();lim.threshold.value=-2;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=0.002;lim.release.value=0.12;lim.connect(duck);
+  var _lo=ctx.createDynamicsCompressor();_lo.threshold.value=-1.5;_lo.knee.value=0;_lo.ratio.value=20;_lo.attack.value=0.001;_lo.release.value=0.08;master.connect(_lo);_lo.connect(ctx.destination);
 }
 function unlock(){
   mkCtx();if(!ctx)return;
@@ -64,9 +67,9 @@ function startTrack(name){
     if(cur&&cfg.sync&&cfg.sync.indexOf(name)>=0&&cfg.sync.indexOf(curName)>=0&&cur.L===t[0]){
       var el=(now()-cur.t0)%t[0];off=t[1]+el;
     }
-    src.connect(g);g.connect(duck);
+    src.connect(g);g.connect(lim);
     var tn=now(),fade=cur?1.2:0.6;
-    g.gain.setValueAtTime(0,tn);g.gain.linearRampToValueAtTime(1,tn+fade);
+    g.gain.setValueAtTime(0,tn);g.gain.linearRampToValueAtTime(TG(name),tn+fade);
     src.start(tn,off);
     stopVoice(cur,1.2);
     cur={src:src,g:g,t0:tn-(off-t[1]),L:t[0]};curName=name;
@@ -88,7 +91,7 @@ function tick(){
   var area=st.area==null?'':String(st.area);
   var m=!!st.muted;if(m!==muted){muted=m;apply()}
   var s=!!st.speaking;
-  if(s!==spk&&ctx){spk=s;var t=now();duck.gain.cancelScheduledValues(t);duck.gain.setValueAtTime(duck.gain.value,t);duck.gain.linearRampToValueAtTime(s?0.5:1,t+(s?0.15:0.6))}
+  if(s!==spk&&ctx){spk=s;var t=now();duck.gain.cancelScheduledValues(t);duck.gain.setValueAtTime(duck.gain.value,t);duck.gain.linearRampToValueAtTime(s?0.3:1,t+(s?0.05:0.35))}
   BGM.area=area;
   var name=cfg.map.hasOwnProperty(area)?cfg.map[area]:(cfg.tracks[area]?area:(cfg.dflt==null?'':cfg.dflt));
   if(st.oneshot&&cfg.oneshot)playOne(st.oneshot);
@@ -107,9 +110,10 @@ var lastOne='';
 function playOne(id){
   if(id===lastOne)return;lastOne=id;
   var name=cfg.oneshot;if(!ctx||!BGM.on||muted||!unlocked)return;
-  load(name,function(buf){var s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=buf;g.gain.value=1;s.connect(g);g.connect(duck);s.start(now())});
+  load(name,function(buf){var s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=buf;g.gain.value=TG(name);s.connect(g);g.connect(lim);s.start(now())});
 }
 BGM.oneshot=function(id){playOne(id)};
+BGM.duck=function(depth,ms){if(!ctx||!sduck||hidden)return;var t=now();sduck.gain.cancelScheduledValues(t);sduck.gain.setValueAtTime(sduck.gain.value,t);sduck.gain.linearRampToValueAtTime(Math.max(0.2,Math.min(1,depth)),t+0.04);sduck.gain.linearRampToValueAtTime(1,t+0.04+Math.max(0.25,(ms||400)/1000)*0.9+0.35)};
 function setOn(v){BGM.on=v;lsSet(v?'1':'0');paint();if(v){unlock();tick()}apply()}
 function paint(){if(!btn)return;btn.setAttribute('aria-pressed',BGM.on?'true':'false');btn.title=BGM.on?'Music on':'Music off';btn.className='bgm-btn'+(BGM.on?'':' off')}
 function mkBtn(){
@@ -135,7 +139,7 @@ function startIntro(){
       if(introDone||!introPlaying||!BGM.on||muted||hidden){introPlaying=false;return}
       try{
         var s=ctx.createBufferSource(),g=ctx.createGain();
-        s.buffer=buf;g.gain.value=cfg.introVol==null?1:cfg.introVol;s.connect(g);g.connect(duck);
+        s.buffer=buf;g.gain.value=(cfg.introVol==null?1:cfg.introVol)*TG(cfg.intro);s.connect(g);g.connect(lim);
         s.onended=function(){if(introV&&introV.src===s)finishIntro(false)};
         s.start(now());introV={src:s,g:g};
       }catch(e){introPlaying=false;introDone=true}
@@ -159,6 +163,8 @@ BGM.init=function(c){
   W.addEventListener('blur',function(){if(cfg.pauseOnBlur){hidden=true;apply()}});
   if(D.body)mkBtn();else D.addEventListener('DOMContentLoaded',mkBtn);
   setInterval(tick,cfg.every||60);BGM.ready=true;
+  /* iOS: after a call/app switch the context can stay interrupted; keep trying (needs a tap on some versions, which unlock() also handles) */
+  setInterval(function(){if(ctx&&unlocked&&!hidden&&BGM.on&&!muted&&ctx.state!=='running'){try{var p=ctx.resume();if(p&&p.catch)p.catch(function(){})}catch(e){}}},1200);
 };
 BGM.state=function(){return{on:BGM.on,cur:curName,want:want,ctx:ctx?ctx.state:'none',duck:duck?duck.gain.value:1,master:master?master.gain.value:0,unlocked:unlocked,muted:muted,hidden:hidden,cached:Object.keys(cache),loop:cur?[cur.src.loop,cur.src.loopStart,cur.src.loopEnd,cur.L]:null,pos:cur?(now()-cur.t0)%cur.L:0,t:now(),intro:cfg&&cfg.intro?{done:introDone,playing:!!introV}:null}};
 })();

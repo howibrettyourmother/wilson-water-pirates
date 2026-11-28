@@ -22,3 +22,13 @@ Zoe gets her own big pink 🎈 button in the bottom-right corner that auto-aims 
 at the nearest target (it pulses if she hasn't tapped for a while). The end screen shows each
 kid's splashes, and the team keeps its own best score (`wwp_team_best`), separate from each kid's.
 Uses the vendored shared kids lib (`src/kids.js`, from github.com/howibrettyourmother/kids-lib).
+
+## Back button + Facelift (Nov 27 2026)
+- **Back button:** big white pill, top-left, always on screen (title, river, Dad scene, end). Tap = back to the hub the kid came from (`?kid=`, else last hub, else the kid's saved profile). Mid-run it pauses and asks "Leave the river?" (Keep paddling / Go home) so a little finger can't lose a run by accident.
+- **Soak-o-meter + SUPER SOAK:** every splash fills the rainbow meter. When Doodle's face lights up it's full: Doodle hops onto the bow with a rainbow hose, auto-soaks everything for ~7 s, the canoe can't be bumped and treasure gets sucked in. A rare Doodle tub also floats by: scoop him up for an instant Super Soak.
+- **Streak cheers:** back-to-back splashes pop NICE! / WOW! / AWESOME! with rising notes (no numbers).
+- **Variety events:** Duck Parade (soak all 7), Fish Leap (soak all 5), Treasure Trail. Finishing a parade/leap drops a chest.
+- **Boss: Captain Toot-Beard** in Pirate Cove. He sways across the river and fires green toot clouds; soak the clouds before they reach the canoe (pee-yew costs a life jacket). Health bar in the HUD, treasure shower and a sinking-ship finish. Smaller health for Zoe's auto mode. If nobody wins in 75 s he sails off, so nobody gets stuck.
+- Canoe wake, rainbow wake in Super Soak, Doodle on the title bow and the end card, cleaner end card (no overlapping rows).
+- New synth SFX (streak notes, super whoosh, toot raspberry, boss hit/down, meow) and 6 new edge-tts voice lines (all free). No paid credits.
+- New badges: `boss`, `super`, `doodle`, `parade`.

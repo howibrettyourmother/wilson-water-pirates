@@ -59,6 +59,26 @@ const AUD=(()=>{
         for(let j=0;j<k;j++){const s=st+j*per,v=rr(0.5,1)*(1-j/k*0.6);G.gain.setValueAtTime(0.0001,s);G.gain.linearRampToValueAtTime(v,s+0.025);G.gain.exponentialRampToValueAtTime(0.0001,s+per*0.85);x.frequency.setValueAtTime(fr*(1.2-j*0.03),s);x.frequency.exponentialRampToValueAtTime(fr*(1-j*0.03),s+per*0.8)}}
       for(let i=0;i<50;i++){const s=t+rr(0.8,2.6),G=g(0,sfxBus);env(G,s,0.001,0.005,0.03,rr(0.04,0.1));n(s,0.05,f('bandpass',rr(900,2200),1.2,G))}}),
     fanfare:safe(()=>{const t=now();[[72,0],[76,0.15],[79,0.3],[84,0.45],[84,0.75]].forEach(([m,d],i)=>{const G=g(0,sfxBus);env(G,t+d,0.01,i==4?0.5:0.1,0.3,0.1);o('square',mtof(m),t+d,0.9,f('lowpass',3000,0.7,G));const G2=g(0,sfxBus);env(G2,t+d,0.005,0.02,0.8,0.08);o('sine',mtof(m+12),t+d,0.9,G2)})})
+,
+    // --- v2 upgrade: streak notes, super soak, toot cannon, boss, Doodle ---
+    streak:safe((lv)=>{const t=now(),sc=[0,2,4,7,9,12,14,16,19,21,24],m=72+sc[Math.min(sc.length-1,Math.max(0,lv|0))];[[0,0],[0.07,7]].forEach(([d,add],i)=>{const G=g(0,sfxBus);env(G,t+d,0.004,0.05,0.22,0.16);o('triangle',mtof(m+add),t+d,0.3,f('lowpass',4200,0.7,G));const G2=g(0,sfxBus);env(G2,t+d,0.003,0.02,0.12,0.06);o('sine',mtof(m+add+12),t+d,0.2,G2)})}),
+    superOn:safe(()=>{const t=now();const G=g(0,sfxBus);env(G,t,0.02,0.45,0.35,0.22);const x=o('sawtooth',200,t,0.9,f('lowpass',2600,1.2,G));x.frequency.exponentialRampToValueAtTime(1600,t+0.55);
+      [[72,0.3],[76,0.42],[79,0.54],[84,0.66],[88,0.78]].forEach(([m,d],i)=>{const H=g(0,sfxBus);env(H,t+d,0.005,0.08,0.25,0.14);o('square',mtof(m),t+d,0.5,f('lowpass',3600,0.8,H))});
+      const N=g(0,sfxBus);env(N,t,0.1,0.3,0.4,0.18);n(t,0.9,f('bandpass',1600,0.7,N))}),
+    superOff:safe(()=>{const t=now(),G=g(0,sfxBus);env(G,t,0.01,0.05,0.35,0.14);const x=o('triangle',900,t,0.5,G);x.frequency.exponentialRampToValueAtTime(220,t+0.4)}),
+    toot:safe((big)=>{const t=now(),d=big?0.55:0.32,G=g(0,sfxBus);env(G,t,0.02,d*0.5,d*0.5,0.3);const F=f('bandpass',big?170:240,4,G);const x=o('sawtooth',big?95:130,t,d,F);x.frequency.linearRampToValueAtTime(big?70:100,t+d);
+      const L=C.createOscillator(),LG=C.createGain();L.type='square';L.frequency.value=big?28:36;LG.gain.value=big?30:40;L.connect(LG);LG.connect(x.frequency);L.start(t);L.stop(t+d+0.05);
+      const N=g(0,sfxBus);env(N,t,0.01,d*0.4,d*0.5,0.12);n(t,d,f('lowpass',900,0.8,N))}),
+    cloudPop:safe(()=>{const t=now(),G=g(0,sfxBus);env(G,t,0.002,0.02,0.2,0.22);const x=o('sine',700,t,0.25,G);x.frequency.exponentialRampToValueAtTime(220,t+0.2);const H=g(0,sfxBus);env(H,t,0.001,0.01,0.1,0.12);n(t,0.1,f('highpass',1500,0.7,H))}),
+    bossHit:safe(()=>{const t=now(),G=g(0,sfxBus);env(G,t,0.003,0.03,0.3,0.4);const x=o('sine',180,t,0.35,G);x.frequency.exponentialRampToValueAtTime(70,t+0.28);const W=g(0,sfxBus);env(W,t+0.02,0.01,0.1,0.2,0.1);const y=o('triangle',380,t+0.02,0.35,W);y.frequency.linearRampToValueAtTime(220,t+0.3);
+      const N=g(0,sfxBus);env(N,t,0.002,0.02,0.18,0.25);n(t,0.25,f('lowpass',2600,0.7,N))}),
+    horn:safe(()=>{const t=now();[0,0.28].forEach((d,i)=>{const G=g(0,sfxBus);env(G,t+d,0.03,0.18,0.22,0.22);const x=o('sawtooth',i?196:147,t+d,0.5,f('lowpass',1100,1,G));x.frequency.linearRampToValueAtTime(i?180:140,t+d+0.45)})}),
+    bossDown:safe(()=>{const t=now();const G=g(0,sfxBus);env(G,t,0.01,0.1,0.9,0.22);const x=o('sine',1400,t,1.1,G);x.frequency.exponentialRampToValueAtTime(110,t+1.0);
+      const N=g(0,sfxBus);env(N,t+0.9,0.02,0.2,0.7,0.35);n(t+0.9,1,f('lowpass',2200,0.8,N));[[72,1.5],[76,1.65],[79,1.8],[84,1.95]].forEach(([m,d])=>{const H=g(0,sfxBus);env(H,t+d,0.005,0.1,0.4,0.16);o('square',mtof(m),t+d,0.6,f('lowpass',3400,0.8,H))})}),
+    meow:safe(()=>{const t=now(),G=g(0,sfxBus);env(G,t,0.06,0.18,0.22,0.22);const F=f('bandpass',1500,3,G);const x=o('sawtooth',520,t,0.5,F);x.frequency.linearRampToValueAtTime(900,t+0.2);x.frequency.linearRampToValueAtTime(560,t+0.46);
+      const F2=f('bandpass',2600,4,G);const y=o('sawtooth',520,t,0.5,F2);y.frequency.linearRampToValueAtTime(900,t+0.2);y.frequency.linearRampToValueAtTime(560,t+0.46)}),
+    hose:safe(()=>{const t=now(),G=g(0,sfxBus);env(G,t,0.01,0.05,0.12,0.1);const F=f('bandpass',3200,1.5,G);n(t,0.2,F);F.frequency.exponentialRampToValueAtTime(1800,t+0.17)}),
+    parade:safe(()=>{const t=now();[0,4,7,12,16,19].forEach((s,i)=>{const G=g(0,sfxBus);env(G,t+i*0.07,0.004,0.04,0.2,0.12);o('square',mtof(76+s),t+i*0.07,0.3,f('lowpass',3800,0.7,G))})})
   };
   // ---------- one voice at a time, with ducking ----------
   let cur=null,curEnd=0,curPrio=0,queued=null;

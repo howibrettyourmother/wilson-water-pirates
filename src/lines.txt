@@ -45,3 +45,9 @@ n70|Seventy!|kv
 n80|Eighty!|kv
 n90|Ninety!|kv
 n100|One hundred!|kv
+super|Super soak time!|kv
+boss1|Arr! Look out! It is Captain Toot-Beard!|kv
+bossdown|You soaked Captain Toot-Beard! Hooray!|kv
+doodle|Doodle to the rescue! Meow!|kv
+parade|Duck parade!|kv
+boss2|Har har! Toot attack!|kv

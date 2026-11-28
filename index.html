@@ -354,12 +354,12 @@ function impact(sh){const big=sh.k==='bal';const rad=big?88:44;let hitAny=false,
   if(sh.lead||big){if(hitAny)missStreak=0;else{missStreak++;if(missStreak>=3&&runT-lastMiss>9&&runT-lastPraise>2.5){if(AUD.say(pick(['miss','miss2']),1)){lastMiss=runT;missStreak=0}}}}}
 function hitTarget(o,who){o.hit++;o.ht=0;splashes++;if(who==='zoe')splZ++;else splA++;const oy=sy(o.wy);burst(o.x,oy,14,'#d8f6ff',1.1);ring(o.x,oy+6,o.r+30);
   if(o.hit<o.hp){AUD.SFX.splash();floatText('SPLASH!',o.x,oy-30,'#fff');return}
-  const pts=o.pts;score+=pts;floatText('+'+pts,o.x,oy-34,'#fff59d');
+  const pts=o.pts;score+=pts;floatText(yayPop(),o.x,oy-34,'#fff59d');
   const S=AUD.SFX;({duck:()=>S.quack(),frog:()=>S.ribbit(),paddler:()=>{S.laughMan();S.splash()},tuber:()=>{S.giggle(true);S.splash()},bear:()=>{S.laughMan();S.splash(true)},fish:()=>S.splash(),beaver:()=>{S.boing()},raft:()=>{S.giggle();S.cheer()},sprinkler:()=>S.splash()}[o.k]||S.splash)();
   if(o.k==='paddler'||o.k==='raft'||o.k==='tuber')o.splashBack=0.5;
   canoe.cheer=1.2;
   // Zoe mode: the count pops on screen; the voice only cheers milestones (10, 20, ...), never more than one number every 4 s
-  if(AUTOZ){zCount++;floatText(''+zCount,o.x,oy-70,'#ff8fc8')}
+  if(AUTOZ){zCount++;floatText(yayPop(),o.x,oy-70,'#ff8fc8')}
   /* score numbers are no longer spoken (no learning content, no robotic number clips) */
   else if(runT-lastPraise>(o.k==='raft'||o.k==='bear'||o.k==='beaver'?1.2:2.6)){const pool=who==='zoe'?['z1','z2','z3','z4','z5','z6','z7','zoe','yay']:['a1','a2','a3','a4','a5','a6','a7','alex','splash'];
     let k=pick(pool);if(o.k==='raft')k=pick(['t1','t4','t5']);if(o.k==='bear'&&R()<0.6)k='bear';if(o.k==='duck'&&R()<0.3)k='duck';if(AUD.say(k,1))lastPraise=runT}
@@ -367,6 +367,8 @@ function hitTarget(o,who){o.hit++;o.ht=0;splashes++;if(who==='zoe')splZ++;else s
 // ---------------- particles ----------------
 function burst(x,y,n,col,sp){for(let i=0;i<n;i++){const a=R()*TAU,v=rr(60,200)*sp;parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-80*sp,life:rr(0.4,0.8),t:0,r:rr(3,7)*sp,col})}}
 function ring(x,y,r){parts.push({ring:1,x,y,t:0,life:0.7,r})}
+const YAYS=['Yay!','Splash!','✨','💖','Whee!','Nice!','⭐','Boom!'];
+function yayPop(){return pick(YAYS)}
 function floatText(s,x,y,col){floats.push({s,x,y,t:0,col})}
 function confetti(n){for(let i=0;i<n;i++)parts.push({x:rr(0,W),y:rr(-60,-10),vx:rr(-40,40),vy:rr(60,180),life:rr(2,3.5),t:0,r:rr(4,7),col:pick(['#ff5ca8','#ffd23f','#7ee081','#5ec8ff','#c387ff','#ff8a3d']),conf:1,rot:R()*6})}
 // ---------------- update ----------------
@@ -414,7 +416,7 @@ function update(dt){T+=dt;if(TOGETHER&&state==='play'){zCool=Math.max(0,zCool-dt
       if(o.k==='fish'){o.jt-=dt;if(o.jt<0){o.jump=1;o.jt=rr(1.2,2);AUD.SFX.splash()}o.jump=Math.max(0,o.jump-dt*1.4)}
       if(o.hit>=o.hp&&o.k==='duck'){o.wy+=dt*160;o.x+=dt*80*o.flip}
       if(o.splashBack!=null&&o.splashBack>0){o.splashBack-=dt;if(o.splashBack<=0){o.splashBack=null;for(let i=0;i<8;i++)parts.push({x:o.x,y:oy,vx:(cg.x-o.x)*rr(0.8,1.2)+rr(-20,20),vy:(cg.y-oy)*1.1-150,life:0.9,t:0,r:rr(3,6),col:'#c8f1ff'});setTimeout(()=>{if(state==='play'){AUD.SFX.giggle(R()<0.5);canoe.cheer=1}},700)}}}
-    else if(o.type==='g'){const ddx=cg.x-o.x,ddy=cg.y-oy;if(Math.hypot(ddx,ddy)<120){o.x+=ddx*dt*2.5;o.wy-=ddy*dt*1.2}if(!o.got&&Math.abs(o.x-cg.x)<38&&Math.abs(oy-cg.y)<78){o.got=1;const v={coin:5,ducky:15,popsicle:20,smore:25,cherry:15,icecream:20,beachball:15,chest:100}[o.k];score+=v;treasure++;AUD.SFX.coin();floatText('+'+v,o.x,oy-20,'#ffe066');burst(o.x,oy,8,'#ffe066',0.6);if(o.k==='chest'){confetti(30);AUD.SFX.fanfare();if(AUD.say('chest',2))lastPraise=runT}else if(o.k!=='coin'&&runT-lastPraise>3){if(AUD.say('treasure',1))lastPraise=runT}}}
+    else if(o.type==='g'){const ddx=cg.x-o.x,ddy=cg.y-oy;if(Math.hypot(ddx,ddy)<120){o.x+=ddx*dt*2.5;o.wy-=ddy*dt*1.2}if(!o.got&&Math.abs(o.x-cg.x)<38&&Math.abs(oy-cg.y)<78){o.got=1;const v={coin:5,ducky:15,popsicle:20,smore:25,cherry:15,icecream:20,beachball:15,chest:100}[o.k];score+=v;treasure++;AUD.SFX.coin();floatText(o.k==='chest'?'Treasure!':yayPop(),o.x,oy-20,'#ffe066');burst(o.x,oy,8,'#ffe066',0.6);if(o.k==='chest'){confetti(30);AUD.SFX.fanfare();if(AUD.say('chest',2))lastPraise=runT}else if(o.k!=='coin'&&runT-lastPraise>3){if(AUD.say('treasure',1))lastPraise=runT}}}
     else if(o.type==='o'){
       if(o.k==='rapids'){if(Math.abs(o.x-cg.x)<o.r+10&&Math.abs(oy-cg.y)<50){canoe.wob=Math.max(canoe.wob,0.7);if(!o.used){o.used=1;AUD.SFX.whoosh();AUD.SFX.giggle(true)}}}
       else if(o.k==='big'){if(!o.used&&Math.abs(o.x-cg.x)<o.r+60&&oy>cg.y-110&&oy<cg.y+30){o.used=1;startDad(o)}}
@@ -758,8 +760,8 @@ function titleTap(p){if(titleUI.tilt&&inRect(p,titleUI.tilt))return;if(titleUI.t
 function drawTitle(){dist+=40/60;fillDecor();drawWorld();
   const g=X.createLinearGradient(0,0,0,H*0.3);g.addColorStop(0,'rgba(130,210,255,0.95)');g.addColorStop(1,'rgba(130,210,255,0)');X.fillStyle=g;X.fillRect(-XL,0,W+2*XL,H*0.3);
   circ(W-60,70,30,'#ffe066');circ(W-60,70,40,'rgba(255,230,100,0.3)');
-  const ty=Math.max(60,H*0.1)+SAFE_T;X.save();X.translate(W/2,ty);X.rotate(-0.04+Math.sin(T*1.5)*0.015);
-  txt('The',0,-30,24,'#fff','center','#1d2b4f');txt('WILSON WATER',0,6,44,'#ffd23f','center','#1d2b4f');txt('PIRATES',0,52,58,'#ff5ca8','center','#1d2b4f');X.restore();
+  const ty=Math.max(86,H*0.12)+SAFE_T;X.save();X.translate(W/2,ty);X.rotate(-0.04+Math.sin(T*1.5)*0.015);
+  txt('WILSON WATER',0,0,44,'#ffd23f','center','#1d2b4f');txt('PIRATES',0,48,58,'#ff5ca8','center','#1d2b4f');X.restore();
   if(LAND){drawTitleLand();return}
   canoe.armA=0;canoe.armZ=0;const CMP=H<720,cy=CMP?Math.max(H*0.40,232+SAFE_T):H*0.52;drawFamily(W/2,cy,Math.sin(T*1.6)*0.06,{cheer:Math.sin(T*1.2)>0.6?1:0});
   // name tags
